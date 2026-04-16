@@ -64,6 +64,28 @@ paths:
           $ref: '#/components/responses/BadRequest'
         401:
           $ref: '#/components/responses/Unauthorized'
+
+  /comptes:
+    post:
+      summary: Créer un compte
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Compte'
+      responses:
+        201:
+          description: Compte créé
+        400:
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      summary: Lister les comptes
+      responses:
+        200:
+          description: Liste des comptes
+        401:
+          $ref: '#/components/responses/Unauthorized'
 components:
   responses:
 
