@@ -1,0 +1,180 @@
+openapi: 3.1.0
+info:
+  title: Federation Agricole API
+  version: 1.0.0
+paths:
+
+
+components:
+  responses:
+
+    BadRequest:
+      description: Requête invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Données invalides"
+            code: 400
+
+    Unauthorized:
+      description: Non authentifié
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Authentification requise"
+            code: 401
+
+    Forbidden:
+      description: Accès interdit
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Accès refusé"
+            code: 403
+
+    NotFound:
+      description: Ressource non trouvée
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Ressource introuvable"
+            code: 404
+
+    InternalServerError:
+      description: Erreur serveur
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Erreur interne du serveur"
+            code: 500
+
+    schemas:
+
+      Error:
+        type: object
+        properties:
+          message:
+            type: string
+          code:
+            type: integer
+
+      CollectiviteCreate:
+        type: object
+        required: [ nom, ville, specialite ]
+        properties:
+          nom:
+            type: string
+          ville:
+            type: string
+          specialite:
+            type: string
+
+      MembreCreate:
+        type: object
+        required:
+          - nom
+          - prenom
+          - dateNaissance
+          - genre
+          - telephone
+          - email
+        properties:
+          nom:
+            type: string
+          prenom:
+            type: string
+          dateNaissance:
+            type: string
+            format: date
+          genre:
+            type: string
+            enum: [ masculin, feminin ]
+          adresse:
+            type: string
+          metier:
+            type: string
+          telephone:
+            type: string
+          email:
+            type: string
+
+      Paiement:
+        type: object
+        properties:
+          membreId:
+            type: integer
+          montant:
+            type: number
+          mode:
+            type: string
+            enum: [ espece, virement, mobile_money ]
+          date:
+            type: string
+            format: date
+
+      Compte:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [ caisse, bancaire, mobile_money ]
+          titulaire:
+            type: string
+          banque:
+            type: string
+          numero:
+            type: string
+          solde:
+            type: number
+
+      Activite:
+        type: object
+        properties:
+          nom:
+            type: string
+          date:
+            type: string
+            format: date
+          obligatoire:
+            type: boolean
+
+      Presence:
+        type: object
+        properties:
+          membreId:
+            type: integer
+          present:
+            type: boolean
+          excuse:
+            type: boolean
+
+      Statistiques:
+        type: object
+        properties:
+          tauxAssiduite:
+            type: number
+          nombreMembres:
+            type: integer
+          details:
+            type: array
+            items:
+              type: object
+              properties:
+                membreId:
+                  type: integer
+                assiduite:
+                  type: number
+                totalPaiements:
+                  type: number
+                impayes:
+                  type: number
