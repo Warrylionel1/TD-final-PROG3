@@ -106,6 +106,28 @@ paths:
       responses:
         200:
           description: Liste des activités
+
+  /activites/{id}/presence:
+    post:
+      summary: Enregistrer présence
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Presence'
+      responses:
+        201:
+          description: Présence enregistrée
+        400:
+          $ref: '#/components/responses/BadRequest'
+        404:
+          $ref: '#/components/responses/NotFound'
 components:
   responses:
 
