@@ -25,6 +25,29 @@ paths:
         500:
           $ref: '#/components/responses/InternalServerError'
 
+  /collectivites/{id}/membres:
+    post:
+      summary: Ajouter un membre
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembreCreate'
+      responses:
+        201:
+          description: Membre ajouté
+        400:
+          $ref: '#/components/responses/BadRequest'
+        404:
+          $ref: '#/components/responses/NotFound'
+        401:
+          $ref: '#/components/responses/Unauthorized'
 
 components:
   responses:
