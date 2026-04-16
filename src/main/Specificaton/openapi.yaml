@@ -86,6 +86,26 @@ paths:
           description: Liste des comptes
         401:
           $ref: '#/components/responses/Unauthorized'
+
+  /activites:
+    post:
+      summary: Créer une activité
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Activite'
+      responses:
+        201:
+          description: Activité créée
+        400:
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      summary: Lister les activités
+      responses:
+        200:
+          description: Liste des activités
 components:
   responses:
 
