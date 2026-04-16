@@ -49,6 +49,21 @@ paths:
         401:
           $ref: '#/components/responses/Unauthorized'
 
+  /paiements:
+    post:
+      summary: Enregistrer un paiement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Paiement'
+      responses:
+        201:
+          description: Paiement enregistré
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
 components:
   responses:
 
