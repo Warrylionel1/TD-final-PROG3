@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Federation Agricole API
-  version: 1.1.0
+  version: 2.0.0
 
 paths:
 
@@ -172,6 +172,34 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         404:
           $ref: '#/components/responses/NotFound'
+
+  /federation/statistiques:
+    get:
+      summary: Obtenir le rapport global de la fédération
+      parameters:
+        - in: query
+          name: dateDebut
+          required: false
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: dateFin
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: Rapport global récupéré
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatistiquesFederation'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
 
 components:
 
@@ -385,3 +413,34 @@ components:
                 type: number
               impayes:
                 type: number
+
+    StatistiquesFederation:
+      type: object
+      properties:
+        dateDebut:
+          type: string
+          format: date
+        dateFin:
+          type: string
+          format: date
+        collectivites:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatistiquesCollectivite'
+
+    StatistiquesCollectivite:
+      type: object
+      properties:
+        collectiviteId:
+          type: integer
+        nomCollectivite:
+          type: string
+        tauxAssiduiteGlobal:
+          type: number
+          example: 87.5
+        pourcentageMembresAJour:
+          type: number
+          example: 92.3
+        nombreNouveauxAdherents:
+          type: integer
+          example: 5
