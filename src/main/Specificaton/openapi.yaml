@@ -1,463 +1,368 @@
-openapi: 3.0.3
-info:
-  title: Federation Agricole API
-  version: 2.0.0
+  openapi: 3.0.3
+  info:
+    title: Federation Agricole API
+    version: 1.0.0
 
-paths:
+  tags:
+    - name: Collectivites
+    - name: Candidatures
+    - name: Membres
+    - name: Paiements
+    - name: Comptes
+    - name: Activites
+    - name: Statistiques
+    - name: Federation
 
-  /collectivites:
-    post:
-      tags:
-        - Collectivites
-      summary: Créer une collectivité
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CollectiviteCreate'
-      responses:
-        201:
-          description: Collectivité créée
-        400:
-          $ref: '#/components/responses/BadRequest'
-        401:
-          $ref: '#/components/responses/Unauthorized'
-        403:
-          $ref: '#/components/responses/Forbidden'
-        500:
-          $ref: '#/components/responses/InternalServerError'
+  paths:
 
-  /collectivites/{id}/membres:
-    post:
-      tags:
-        - Membres
-      summary: Ajouter un membre à une collectivité
-      parameters:
-        - in: path
-          name: id
+    /collectivites:
+      post:
+        tags: [Collectivites]
+        summary: Créer une collectivité
+        requestBody:
           required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MembreCreate'
-      responses:
-        201:
-          description: Membre ajouté avec succès
-        400:
-          $ref: '#/components/responses/BadRequest'
-        401:
-          $ref: '#/components/responses/Unauthorized'
-        404:
-          $ref: '#/components/responses/NotFound'
-        422:
-          description: Conditions d'admission non remplies
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                message: "Conditions de parrainage non respectées : parrains de la collectivité cible < parrains extérieurs."
-                code: 422
+                $ref: '#/components/schemas/CollectiviteCreate'
+        responses:
+          201:
+            description: Collectivité créée
+          400:
+            $ref: '#/components/responses/BadRequest'
 
-  /paiements:
-    post:
-      tags:
-        - Paiements
-      summary: Enregistrer un paiement
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Paiement'
-      responses:
-        201:
-          description: Paiement enregistré
-        400:
-          $ref: '#/components/responses/BadRequest'
-        401:
-          $ref: '#/components/responses/Unauthorized'
-
-  /comptes:
-    post:
-      tags:
-        - Comptes
-      summary: Créer un compte
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Compte'
-      responses:
-        201:
-          description: Compte créé
-        400:
-          $ref: '#/components/responses/BadRequest'
-
-    get:
-      tags:
-        - Comptes
-      summary: Lister les comptes
-      responses:
-        200:
-          description: Liste des comptes
-        401:
-          $ref: '#/components/responses/Unauthorized'
-
-  /activites:
-    post:
-      tags:
-        - Activites
-      summary: Créer une activité
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Activite'
-      responses:
-        201:
-          description: Activité créée
-        400:
-          $ref: '#/components/responses/BadRequest'
-
-    get:
-      tags:
-        - Activites
-      summary: Lister les activités
-      responses:
-        200:
-          description: Liste des activités
-
-  /activites/{id}/presence:
-    post:
-      tags:
-        - Activites
-      summary: Enregistrer une présence à une activité
-      parameters:
-        - in: path
-          name: id
+    /candidatures:
+      post:
+        tags: [Candidatures]
+        summary: Demander une adhésion à une collectivité
+        requestBody:
           required: true
-          schema:
-            type: integer
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Presence'
-      responses:
-        201:
-          description: Présence enregistrée
-        400:
-          $ref: '#/components/responses/BadRequest'
-        404:
-          $ref: '#/components/responses/NotFound'
-
-  /collectivites/{id}/statistiques:
-    get:
-      tags:
-        - Statistiques
-      summary: Obtenir les statistiques d'une collectivité
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-        - in: query
-          name: dateDebut
-          required: false
-          schema:
-            type: string
-            format: date
-        - in: query
-          name: dateFin
-          required: false
-          schema:
-            type: string
-            format: date
-      responses:
-        200:
-          description: Statistiques récupérées
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Statistiques'
-        401:
-          $ref: '#/components/responses/Unauthorized'
-        404:
-          $ref: '#/components/responses/NotFound'
+                $ref: '#/components/schemas/CandidatureCreate'
+        responses:
+          201:
+            description: Candidature acceptée
+          422:
+            description: Conditions non respectées
+          400:
+            $ref: '#/components/responses/BadRequest'
 
-  /federation/statistiques:
-    get:
-      tags:
-        - Statistiques
-      summary: Obtenir le rapport global de la fédération
-      parameters:
-        - in: query
-          name: dateDebut
-          required: false
-          schema:
-            type: string
-            format: date
-        - in: query
-          name: dateFin
-          required: false
-          schema:
-            type: string
-            format: date
-      responses:
-        200:
-          description: Rapport global récupéré
+    /membres/{id}/changement-collectivite:
+      put:
+        tags: [Membres]
+        summary: Changer de collectivité
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: integer
+        requestBody:
+          required: true
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StatistiquesFederation'
-        401:
-          $ref: '#/components/responses/Unauthorized'
-        403:
-          $ref: '#/components/responses/Forbidden'
+                type: object
+                required: [nouvelleCollectiviteId]
+                properties:
+                  nouvelleCollectiviteId:
+                    type: integer
+        responses:
+          200:
+            description: Collectivité mise à jour
 
-components:
-  responses:
-    BadRequest:
-      description: Requête invalide
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            message: "Données invalides"
-            code: 400
+    /membres/{id}/demission:
+      post:
+        tags: [Membres]
+        summary: Démissionner de la collectivité
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: integer
+        responses:
+          200:
+            description: Membre retiré
 
-    Unauthorized:
-      description: Non authentifié
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            message: "Authentification requise"
-            code: 401
+    /paiements:
+      post:
+        tags: [Paiements]
+        summary: Enregistrer un paiement
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paiement'
+        responses:
+          201:
+            description: Paiement enregistré
 
-    Forbidden:
-      description: Accès interdit
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            message: "Accès refusé"
-            code: 403
+    /comptes:
+      post:
+        tags: [Comptes]
+        summary: Créer un compte
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Compte'
+        responses:
+          201:
+            description: Compte créé
 
-    NotFound:
-      description: Ressource non trouvée
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            message: "Ressource introuvable"
-            code: 404
+      get:
+        tags: [Comptes]
+        summary: Lister les comptes
+        responses:
+          200:
+            description: Liste des comptes
 
-    InternalServerError:
-      description: Erreur serveur
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            message: "Erreur interne du serveur"
-            code: 500
+    /activites:
+      post:
+        tags: [Activites]
+        summary: Créer une activité
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activite'
+        responses:
+          201:
+            description: Activité créée
 
-  schemas:
-    Error:
-      type: object
-      properties:
-        message:
-          type: string
-        code:
-          type: integer
+      get:
+        tags: [Activites]
+        summary: Lister les activités
+        responses:
+          200:
+            description: Liste des activités
 
-    CollectiviteCreate:
-      type: object
-      required: [nom, ville, specialite]
-      properties:
-        nom:
-          type: string
-        ville:
-          type: string
-        specialite:
-          type: string
+    /activites/{id}/presence:
+      post:
+        tags: [Activites]
+        summary: Enregistrer présence
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: integer
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presence'
+        responses:
+          201:
+            description: Présence enregistrée
 
-    MembreCreate:
-      type: object
-      required:
-        - nom
-        - prenom
-        - dateNaissance
-        - genre
-        - telephone
-        - email
-        - parrains
-        - paiement
-      properties:
-        nom:
-          type: string
-        prenom:
-          type: string
-        dateNaissance:
-          type: string
-          format: date
-        genre:
-          type: string
-          enum: [masculin, feminin]
-        adresse:
-          type: string
-        metier:
-          type: string
-        telephone:
-          type: string
-        email:
-          type: string
-        parrains:
-          type: array
-          minItems: 2
-          items:
-            $ref: '#/components/schemas/Parrain'
-        paiement:
-          $ref: '#/components/schemas/PaiementAdhesion'
+    /collectivites/{id}/statistiques:
+      get:
+        tags: [Statistiques]
+        summary: Statistiques collectivité
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: integer
+          - in: query
+            name: dateDebut
+            schema:
+              type: string
+              format: date
+          - in: query
+            name: dateFin
+            schema:
+              type: string
+              format: date
+        responses:
+          200:
+            description: Statistiques récupérées
 
-    Parrain:
-      type: object
-      required:
-        - membreId
-        - relation
-      properties:
-        membreId:
-          type: integer
-        relation:
-          type: string
-          example: "collègue"
+    /federation/statistiques:
+      get:
+        tags: [Federation]
+        summary: Rapport global fédération
+        parameters:
+          - in: query
+            name: dateDebut
+            schema:
+              type: string
+              format: date
+          - in: query
+            name: dateFin
+            schema:
+              type: string
+              format: date
+        responses:
+          200:
+            description: Rapport généré
 
-    PaiementAdhesion:
-      type: object
-      required:
-        - montant
-        - mode
-        - date
-      properties:
-        montant:
-          type: number
-          example: 250000
-        mode:
-          type: string
-          enum: [virement, mobile_money]
-        date:
-          type: string
-          format: date
+  components:
 
-    Paiement:
-      type: object
-      properties:
-        membreId:
-          type: integer
-        montant:
-          type: number
-        mode:
-          type: string
-          enum: [espece, virement, mobile_money]
-        date:
-          type: string
-          format: date
+    schemas:
 
-    Compte:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: [caisse, bancaire, mobile_money]
-        titulaire:
-          type: string
-        banque:
-          type: string
-        numero:
-          type: string
-        solde:
-          type: number
+      CollectiviteCreate:
+        type: object
+        required: [nom, ville, specialite, cotisationAnnuelle]
+        properties:
+          nom:
+            type: string
+          ville:
+            type: string
+          specialite:
+            type: string
+          cotisationAnnuelle:
+            type: number
 
-    Activite:
-      type: object
-      properties:
-        nom:
-          type: string
-        date:
-          type: string
-          format: date
-        obligatoire:
-          type: boolean
+      Parrain:
+        type: object
+        required: [membreId, collectiviteId, relation]
+        properties:
+          membreId:
+            type: integer
+          collectiviteId:
+            type: integer
+          relation:
+            type: string
 
-    Presence:
-      type: object
-      properties:
-        membreId:
-          type: integer
-        present:
-          type: boolean
-        excuse:
-          type: boolean
+      MembreCreate:
+        type: object
+        required:
+          - nom
+          - prenom
+          - dateNaissance
+          - genre
+          - telephone
+          - email
+        properties:
+          nom:
+            type: string
+          prenom:
+            type: string
+          dateNaissance:
+            type: string
+            format: date
+          genre:
+            type: string
+            enum: [masculin, feminin]
+          adresse:
+            type: string
+          metier:
+            type: string
+          telephone:
+            type: string
+          email:
+            type: string
 
-    Statistiques:
-      type: object
-      properties:
-        tauxAssiduite:
-          type: number
-        nombreMembres:
-          type: integer
-        details:
-          type: array
-          items:
+      CandidatureCreate:
+        type: object
+        required:
+          - collectiviteId
+          - candidat
+          - parrains
+          - paiement
+        properties:
+          collectiviteId:
+            type: integer
+          candidat:
+            $ref: '#/components/schemas/MembreCreate'
+          parrains:
+            type: array
+            minItems: 2
+            items:
+              $ref: '#/components/schemas/Parrain'
+          paiement:
             type: object
+            required: [fraisAdhesion, cotisationAnnuelle, mode]
             properties:
-              membreId:
-                type: integer
-              assiduite:
+              fraisAdhesion:
                 type: number
-              totalPaiements:
+                example: 50000
+              cotisationAnnuelle:
                 type: number
-              impayes:
+              montantTotal:
                 type: number
+                description: fraisAdhesion + cotisationAnnuelle
+              mode:
+                type: string
+                enum: [mobile_money, virement]
 
-    StatistiquesFederation:
-      type: object
-      properties:
-        dateDebut:
-          type: string
-          format: date
-        dateFin:
-          type: string
-          format: date
-        collectivites:
-          type: array
-          items:
-            $ref: '#/components/schemas/StatistiquesCollectivite'
+      Paiement:
+        type: object
+        required: [membreId, montant, mode, date]
+        properties:
+          membreId:
+            type: integer
+          montant:
+            type: number
+          mode:
+            type: string
+            enum: [espece, virement, mobile_money]
+          date:
+            type: string
+            format: date
 
-    StatistiquesCollectivite:
-      type: object
-      properties:
-        collectiviteId:
-          type: integer
-        nomCollectivite:
-          type: string
-        tauxAssiduiteGlobal:
-          type: number
-          example: 87.5
-        pourcentageMembresAJour:
-          type: number
-          example: 92.3
-        nombreNouveauxAdherents:
-          type: integer
-          example: 5
+      Compte:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [caisse, bancaire, mobile_money]
+          titulaire:
+            type: string
+          banque:
+            type: string
+          numero:
+            type: string
+          solde:
+            type: number
+
+      Activite:
+        type: object
+        properties:
+          nom:
+            type: string
+          date:
+            type: string
+            format: date
+          obligatoire:
+            type: boolean
+
+      Presence:
+        type: object
+        properties:
+          membreId:
+            type: integer
+          present:
+            type: boolean
+          excuse:
+            type: boolean
+
+      Statistiques:
+        type: object
+        properties:
+          tauxAssiduite:
+            type: number
+          tauxCotisation:
+            type: number
+          nombreMembres:
+            type: integer
+          nouveauxAdherents:
+            type: integer
+
+      Error:
+        type: object
+        properties:
+          message:
+            type: string
+          code:
+            type: integer
