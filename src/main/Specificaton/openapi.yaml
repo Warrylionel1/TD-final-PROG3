@@ -7,6 +7,8 @@ paths:
 
   /collectivites:
     post:
+      tags:
+        - Collectivites
       summary: Créer une collectivité
       requestBody:
         required: true
@@ -28,6 +30,8 @@ paths:
 
   /collectivites/{id}/membres:
     post:
+      tags:
+        - Membres
       summary: Ajouter un membre à une collectivité
       parameters:
         - in: path
@@ -62,6 +66,8 @@ paths:
 
   /paiements:
     post:
+      tags:
+        - Paiements
       summary: Enregistrer un paiement
       requestBody:
         content:
@@ -78,6 +84,8 @@ paths:
 
   /comptes:
     post:
+      tags:
+        - Comptes
       summary: Créer un compte
       requestBody:
         content:
@@ -91,6 +99,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
 
     get:
+      tags:
+        - Comptes
       summary: Lister les comptes
       responses:
         200:
@@ -100,6 +110,8 @@ paths:
 
   /activites:
     post:
+      tags:
+        - Activites
       summary: Créer une activité
       requestBody:
         content:
@@ -113,6 +125,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
 
     get:
+      tags:
+        - Activites
       summary: Lister les activités
       responses:
         200:
@@ -120,6 +134,8 @@ paths:
 
   /activites/{id}/presence:
     post:
+      tags:
+        - Activites
       summary: Enregistrer une présence à une activité
       parameters:
         - in: path
@@ -142,6 +158,8 @@ paths:
 
   /collectivites/{id}/statistiques:
     get:
+      tags:
+        - Statistiques
       summary: Obtenir les statistiques d'une collectivité
       parameters:
         - in: path
@@ -175,6 +193,8 @@ paths:
 
   /federation/statistiques:
     get:
+      tags:
+        - Statistiques
       summary: Obtenir le rapport global de la fédération
       parameters:
         - in: query
@@ -202,9 +222,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
 
 components:
-
   responses:
-
     BadRequest:
       description: Requête invalide
       content:
@@ -256,7 +274,6 @@ components:
             code: 500
 
   schemas:
-
     Error:
       type: object
       properties:
