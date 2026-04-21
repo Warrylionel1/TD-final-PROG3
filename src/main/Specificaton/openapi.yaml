@@ -1,7 +1,8 @@
 openapi: 3.0.3
 info:
   title: Federation Agricole API
-  version: 1.0.0
+  version: 1.1.0
+
 paths:
 
   /collectivites:
@@ -27,7 +28,7 @@ paths:
 
   /collectivites/{id}/membres:
     post:
-      summary: Ajouter un membre
+      summary: Ajouter un membre à une collectivité
       parameters:
         - in: path
           name: id
@@ -35,19 +36,29 @@ paths:
           schema:
             type: integer
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/MembreCreate'
       responses:
         201:
-          description: Membre ajouté
+          description: Membre ajouté avec succès
         400:
           $ref: '#/components/responses/BadRequest'
-        404:
-          $ref: '#/components/responses/NotFound'
         401:
           $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+        422:
+          description: Conditions d'admission non remplies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Conditions de parrainage non respectées : parrains de la collectivité cible < parrains extérieurs."
+                code: 422
 
   /paiements:
     post:
@@ -109,7 +120,7 @@ paths:
 
   /activites/{id}/presence:
     post:
-      summary: Enregistrer présence
+      summary: Enregistrer une présence à une activité
       parameters:
         - in: path
           name: id
@@ -131,13 +142,25 @@ paths:
 
   /collectivites/{id}/statistiques:
     get:
-      summary: Obtenir statistiques
+      summary: Obtenir les statistiques d'une collectivité
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: integer
+        - in: query
+          name: dateDebut
+          required: false
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: dateFin
+          required: false
+          schema:
+            type: string
+            format: date
       responses:
         200:
           description: Statistiques récupérées
@@ -145,12 +168,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Statistiques'
-        404:
-          $ref: '#/components/responses/NotFound'
         401:
           $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
 
 components:
+
   responses:
 
     BadRequest:
@@ -233,6 +257,8 @@ components:
         - genre
         - telephone
         - email
+        - parrains
+        - paiement
       properties:
         nom:
           type: string
@@ -252,6 +278,42 @@ components:
           type: string
         email:
           type: string
+        parrains:
+          type: array
+          minItems: 2
+          items:
+            $ref: '#/components/schemas/Parrain'
+        paiement:
+          $ref: '#/components/schemas/PaiementAdhesion'
+
+    Parrain:
+      type: object
+      required:
+        - membreId
+        - relation
+      properties:
+        membreId:
+          type: integer
+        relation:
+          type: string
+          example: "collègue"
+
+    PaiementAdhesion:
+      type: object
+      required:
+        - montant
+        - mode
+        - date
+      properties:
+        montant:
+          type: number
+          example: 250000
+        mode:
+          type: string
+          enum: [virement, mobile_money]
+        date:
+          type: string
+          format: date
 
     Paiement:
       type: object
