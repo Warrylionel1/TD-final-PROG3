@@ -15,4 +15,10 @@ public class Collectivity {
     private CollectivityStructure structure;
     private List<Member> members;
     private boolean federationApproval;
+    private String number;
+    private String name;
+
+    public boolean hasAssignedIdentity() {
+        return number != null && name != null;
+    }
 }

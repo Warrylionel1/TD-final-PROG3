@@ -1,9 +1,12 @@
 package com.example.agricole.service;
 
+import com.example.agricole.dto.AssignIdentityRequest;
 import com.example.agricole.dto.CreateCollectivity;
 import com.example.agricole.entity.Collectivity;
 import com.example.agricole.entity.Member;
 import com.example.agricole.exception.BadRequestException;
+import com.example.agricole.exception.CollectivityNotFoundException;
+import com.example.agricole.exception.ConflictException;
 import com.example.agricole.exception.MemberNotFoundException;
 import com.example.agricole.repository.CollectivityRepository;
 import com.example.agricole.repository.MemberRepository;
@@ -77,5 +80,23 @@ public class CollectivityService {
         }
 
         return result;
+    }
+
+    public Collectivity assignIdentity(String collectivityId, AssignIdentityRequest request) {
+        Collectivity collectivity = collectivityRepository.findById(collectivityId);
+        if (collectivity == null) {
+            throw new CollectivityNotFoundException(collectivityId);
+        }
+        if (collectivity.hasAssignedIdentity()) {
+            throw new ConflictException("Cette collectivité possède déjà un numéro et un nom");
+        }
+        if (collectivityRepository.existsByNumber(request.getNumber())) {
+            throw new ConflictException("Le numéro " + request.getNumber() + " est déjà utilisé");
+        }
+        if (collectivityRepository.existsByName(request.getName())) {
+            throw new ConflictException("Le nom " + request.getName() + " est déjà utilisé");
+        }
+        collectivityRepository.updateNumberAndName(collectivityId, request.getNumber(), request.getName());
+        return collectivityRepository.findById(collectivityId);
     }
 }

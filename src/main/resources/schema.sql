@@ -51,3 +51,6 @@ CREATE TABLE collectivity_structure (
                                         FOREIGN KEY (treasurer_id) REFERENCES member(id),
                                         FOREIGN KEY (secretary_id) REFERENCES member(id)
 );
+
+ALTER TABLE collectivity ADD COLUMN number VARCHAR(50) UNIQUE;
+ALTER TABLE collectivity ADD COLUMN name VARCHAR(255) UNIQUE;
