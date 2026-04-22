@@ -3,9 +3,10 @@ info:
   title: Agricultural federation API
   description: |
     # Versioning
-    This API uses semantic versioning (MAJOR.MINOR.PATCH). Available versions are : 
+    This API uses semantic versioning (MAJOR.MINOR.PATCH). Available versions are :
     - v0.0.1 (2026-04-21) : POST /collectivities for collectivities creation and POST /members for members creation.
-  version: 0.0.1
+    - v0.0.2 (2026-04-22) : Adds POST /collectivities/{collectivityId}/assign-identity to assign unique number and name to a collectivity.
+  version: 0.0.2
 servers:
   - url: 'https://localhost:8080'
 paths:
@@ -13,7 +14,7 @@ paths:
     post:
       summary: Create list of collectivities
       description: |
-        During collectivity request body creation, only members ID are provided to identify members. 
+        During collectivity request body creation, only members ID are provided to identify members.
         But the response content includes members information, not only their IDs.
       requestBody:
         content:
@@ -56,11 +57,58 @@ paths:
                   $ref: '#/components/schemas/Member'
         400:
           description: |
-            The following case must return a bad request exception : 
+            The following case must return a bad request exception :
             - Member with bad referees or without proper payment.
             - Membership dues not paid or registration fee not paid.
         404:
           description: Either collectivity or member not found.
+  '/collectivities/{collectivityId}/assign-identity':
+    post:
+      summary: Assign a unique number and name to a collectivity
+      description: |
+        Assigns a unique identifier (number) and a unique name to a collectivity.
+        Once assigned, they cannot be changed. If the collectivity already has a number and name,
+        or if the provided number or name already exists for another collectivity, a conflict error is returned.
+      parameters:
+        - name: collectivityId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The identifier of the collectivity (from creation)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - number
+                - name
+              properties:
+                number:
+                  type: string
+                  description: Unique number of the collectivity (e.g., "COL-001")
+                  example: "COL-042"
+                name:
+                  type: string
+                  description: Unique name of the collectivity
+                  example: "Rice Growers of Antananarivo"
+      responses:
+        200:
+          description: Identity successfully assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collectivity'
+        400:
+          description: Invalid request (missing number or name, or format incorrect)
+        404:
+          description: Collectivity not found
+        409:
+          description: |
+            Conflict – either the collectivity already has a number and name,
+            or the provided number or name is already used by another collectivity.
 components:
   schemas:
     CreateCollectivity:
@@ -71,8 +119,7 @@ components:
         members:
           type: array
           items:
-            schema:
-              $ref: '#/components/schemas/MemberIdentifier'
+            $ref: '#/components/schemas/MemberIdentifier'
         federationApproval:
           type: boolean
         structure:
@@ -104,6 +151,14 @@ components:
       properties:
         id:
           type: string
+        number:
+          type: string
+          nullable: true
+          description: Unique number assigned by the federation (null until assigned)
+        name:
+          type: string
+          nullable: true
+          description: Unique name assigned by the federation (null until assigned)
         location:
           type: string
         structure:
@@ -146,7 +201,7 @@ components:
         profession:
           type: string
         phoneNumber:
-          type: int
+          type: string
         email:
           type: string
         occupation:
