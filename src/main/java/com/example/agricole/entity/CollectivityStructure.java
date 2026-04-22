@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CollectivityStructure {
 
+public class CollectivityStructure {
     private Member president;
     private Member vicePresident;
     private Member treasurer;
