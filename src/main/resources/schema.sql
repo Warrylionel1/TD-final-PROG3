@@ -1,56 +1,64 @@
-CREATE DATABASE agricultural_federation;
+-- =========================
+-- TABLE MEMBER
+-- =========================
+CREATE TABLE member (
+                        id VARCHAR PRIMARY KEY,
+                        first_name VARCHAR NOT NULL,
+                        last_name VARCHAR NOT NULL,
+                        birth_date DATE,
+                        gender VARCHAR,
+                        address VARCHAR,
+                        profession VARCHAR,
+                        phone_number VARCHAR,
+                        email VARCHAR UNIQUE,
+                        occupation VARCHAR,
+                        join_date DATE DEFAULT CURRENT_DATE
+);
 
-\c agricultural_federation;
+-- =========================
+-- TABLE COLLECTIVITY
+-- =========================
+CREATE TABLE collectivity (
+                              id SERIAL PRIMARY KEY,
+                              location VARCHAR NOT NULL,
+                              federation_approval BOOLEAN NOT NULL
+);
 
-CREATE TYPE gender_enum AS ENUM ('MALE', 'FEMALE');
-CREATE TYPE occupation_enum AS ENUM ('JUNIOR', 'SENIOR', 'SECRETARY', 'TREASURER', 'VICE_PRESIDENT', 'PRESIDENT');
-CREATE TYPE payment_status_enum AS ENUM ('PAID', 'UNPAID');
+-- =========================
+-- RELATION COLLECTIVITY ↔ MEMBER
+-- =========================
+CREATE TABLE collectivity_member (
+                                     collectivity_id INT,
+                                     member_id VARCHAR,
+                                     PRIMARY KEY (collectivity_id, member_id),
+                                     FOREIGN KEY (collectivity_id) REFERENCES collectivity(id) ON DELETE CASCADE,
+                                     FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE CASCADE
+);
 
--- SERIAL = INT auto-incrémenté
-CREATE TABLE IF NOT EXISTS collectivities (
-                                              id SERIAL PRIMARY KEY,
-                                              location VARCHAR(255) NOT NULL,
-    federation_approval BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+-- =========================
+-- RELATION PARRAINAGE (MEMBER ↔ MEMBER)
+-- =========================
+CREATE TABLE member_referee (
+                                member_id VARCHAR,
+                                referee_id VARCHAR,
+                                PRIMARY KEY (member_id, referee_id),
+                                FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE CASCADE,
+                                FOREIGN KEY (referee_id) REFERENCES member(id) ON DELETE CASCADE
+);
 
-CREATE TABLE IF NOT EXISTS members (
-                                       id SERIAL PRIMARY KEY,
-                                       first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    birth_date DATE NOT NULL,
-    gender gender_enum NOT NULL,
-    address TEXT NOT NULL,
-    profession VARCHAR(255) NOT NULL,
-    phone_number VARCHAR(20) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    occupation occupation_enum NOT NULL DEFAULT 'JUNIOR',
-    collectivity_id INTEGER REFERENCES collectivities(id) ON DELETE SET NULL,
-    join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    registration_fee_paid payment_status_enum DEFAULT 'UNPAID',
-    membership_dues_paid payment_status_enum DEFAULT 'UNPAID'
-    );
+-- =========================
+-- STRUCTURE COLLECTIVITY
+-- =========================
+CREATE TABLE collectivity_structure (
+                                        collectivity_id INT PRIMARY KEY,
+                                        president_id VARCHAR NOT NULL,
+                                        vice_president_id VARCHAR NOT NULL,
+                                        treasurer_id VARCHAR NOT NULL,
+                                        secretary_id VARCHAR NOT NULL,
 
-CREATE TABLE IF NOT EXISTS collectivity_structure (
-                                                      id SERIAL PRIMARY KEY,
-                                                      collectivity_id INTEGER NOT NULL REFERENCES collectivities(id) ON DELETE CASCADE,
-    president_id INTEGER REFERENCES members(id),
-    vice_president_id INTEGER REFERENCES members(id),
-    treasurer_id INTEGER REFERENCES members(id),
-    secretary_id INTEGER REFERENCES members(id),
-    mandate_start DATE NOT NULL,
-    mandate_end DATE NOT NULL,
-    UNIQUE(collectivity_id),
-    UNIQUE(president_id),
-    UNIQUE(vice_president_id),
-    UNIQUE(treasurer_id),
-    UNIQUE(secretary_id)
-    );
-
-CREATE TABLE IF NOT EXISTS sponsorships (
-                                            id SERIAL PRIMARY KEY,
-                                            member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-    referee_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-    relation VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(member_id, referee_id)
+                                        FOREIGN KEY (collectivity_id) REFERENCES collectivity(id) ON DELETE CASCADE,
+                                        FOREIGN KEY (president_id) REFERENCES member(id),
+                                        FOREIGN KEY (vice_president_id) REFERENCES member(id),
+                                        FOREIGN KEY (treasurer_id) REFERENCES member(id),
+                                        FOREIGN KEY (secretary_id) REFERENCES member(id)
+);
