@@ -7,7 +7,8 @@ import com.example.agricole.exception.BadRequestException;
 import com.example.agricole.exception.MemberNotFoundException;
 import com.example.agricole.repository.CollectivityRepository;
 import com.example.agricole.repository.MemberRepository;
-import com.example.agricole.validator.ValidationService;
+import com.example.agricole.validator.CollectivityStructureValidator;
+import com.example.agricole.validator.MemberExperienceValidator;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -18,14 +19,19 @@ public class CollectivityService {
 
     private final CollectivityRepository collectivityRepository;
     private final MemberRepository memberRepository;
-    private final ValidationService validationService;
+    private final MemberExperienceValidator experienceValidator;
+    private final CollectivityStructureValidator structureValidator;
 
-    public CollectivityService(CollectivityRepository collectivityRepository,
-                               MemberRepository memberRepository,
-                               ValidationService validationService) {
+    public CollectivityService(
+            CollectivityRepository collectivityRepository,
+            MemberRepository memberRepository,
+            MemberExperienceValidator experienceValidator,
+            CollectivityStructureValidator structureValidator
+    ) {
         this.collectivityRepository = collectivityRepository;
         this.memberRepository = memberRepository;
-        this.validationService = validationService;
+        this.experienceValidator = experienceValidator;
+        this.structureValidator = structureValidator;
     }
 
     public List<Collectivity> createCollectivities(List<CreateCollectivity> requests) {
@@ -49,14 +55,16 @@ public class CollectivityService {
             }
 
             long experiencedMembers = members.stream()
-                    .filter(validationService::has6MonthsExperience)
+                    .filter(experienceValidator::has6MonthsExperience)
                     .count();
 
             if (experiencedMembers < 5) {
-                throw new BadRequestException("At least 5 members with 6 months experience required");
+                throw new BadRequestException(
+                        "At least 5 members with 6 months experience required"
+                );
             }
 
-            validateStructure(req, members);
+            structureValidator.validateStructure(req, members);
 
             Collectivity collectivity = new Collectivity();
             collectivity.setLocation(req.getLocation());
@@ -69,28 +77,5 @@ public class CollectivityService {
         }
 
         return result;
-    }
-
-    private void validateStructure(CreateCollectivity req, List<Member> members) {
-
-        List<String> required = List.of(
-                req.getStructure().getPresident(),
-                req.getStructure().getVicePresident(),
-                req.getStructure().getTreasurer(),
-                req.getStructure().getSecretary()
-        );
-
-        if (required.contains(null)) {
-            throw new BadRequestException("Structure incomplete");
-        }
-
-        for (String id : required) {
-            boolean exists = members.stream()
-                    .anyMatch(m -> m.getId().equals(id));
-
-            if (!exists) {
-                throw new BadRequestException("Structure members must belong to collectivity");
-            }
-        }
     }
 }

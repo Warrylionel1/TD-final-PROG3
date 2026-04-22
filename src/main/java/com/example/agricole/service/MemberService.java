@@ -5,24 +5,35 @@ import com.example.agricole.entity.Collectivity;
 import com.example.agricole.entity.Member;
 import com.example.agricole.exception.BadRequestException;
 import com.example.agricole.exception.CollectivityNotFoundException;
+import com.example.agricole.exception.MemberNotFoundException;
 import com.example.agricole.repository.CollectivityRepository;
 import com.example.agricole.repository.MemberRepository;
+import com.example.agricole.validator.MemberExperienceValidator;
+import com.example.agricole.validator.MemberRefereeValidator;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class MemberService {
 
     private final MemberRepository memberRepository;
     private final CollectivityRepository collectivityRepository;
+    private final MemberRefereeValidator memberRefereeValidator;
+    private final MemberExperienceValidator memberExperienceValidator;
 
     public MemberService(MemberRepository memberRepository,
-                         CollectivityRepository collectivityRepository) {
+                         CollectivityRepository collectivityRepository,
+                         MemberRefereeValidator memberRefereeValidator,
+                         MemberExperienceValidator memberExperienceValidator) {
+
         this.memberRepository = memberRepository;
         this.collectivityRepository = collectivityRepository;
+        this.memberRefereeValidator = memberRefereeValidator;
+        this.memberExperienceValidator = memberExperienceValidator;
     }
 
     public List<Member> createMembers(List<CreateMember> requests) {
@@ -42,20 +53,26 @@ public class MemberService {
                 throw new BadRequestException("Payment not valid");
             }
 
+            if (req.getReferees() == null || req.getReferees().isEmpty()) {
+                throw new BadRequestException("Referees required");
+            }
+
             List<Member> referees = memberRepository.findByIds(req.getReferees());
 
             if (referees.size() != req.getReferees().size()) {
-                throw new BadRequestException("Some referees not found");
+                throw new MemberNotFoundException("One or more referees not found");
             }
 
-            validateReferees(referees, collectivity);
+            memberRefereeValidator.validate(referees, collectivity);
 
             Member member = new Member();
+            member.setId(UUID.randomUUID().toString());
             member.setFirstName(req.getFirstName());
             member.setLastName(req.getLastName());
             member.setEmail(req.getEmail());
             member.setOccupation(req.getOccupation());
             member.setJoinDate(LocalDate.now());
+            member.setReferees(referees);
 
             memberRepository.save(member);
 
@@ -63,33 +80,5 @@ public class MemberService {
         }
 
         return created;
-    }
-
-    private void validateReferees(List<Member> referees, Collectivity collectivity) {
-
-        if (referees.size() < 2) {
-            throw new BadRequestException("At least 2 referees required");
-        }
-
-        long internal = referees.stream()
-                .filter(r -> isMemberInCollectivity(r, collectivity))
-                .count();
-
-        long external = referees.size() - internal;
-
-        if (internal < external) {
-            throw new BadRequestException("Invalid referees distribution");
-        }
-    }
-
-    private boolean isMemberInCollectivity(Member member, Collectivity collectivity) {
-
-        if (collectivity.getMembers() == null) {
-            return false;
-        }
-
-        return collectivity.getMembers()
-                .stream()
-                .anyMatch(m -> m.getId().equals(member.getId()));
     }
 }

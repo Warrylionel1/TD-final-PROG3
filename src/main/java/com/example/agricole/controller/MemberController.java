@@ -1,13 +1,13 @@
 package com.example.agricole.controller;
 
 import com.example.agricole.dto.CreateMember;
+import com.example.agricole.exception.BadRequestException;
+import com.example.agricole.exception.CollectivityNotFoundException;
+import com.example.agricole.exception.MemberNotFoundException;
 import com.example.agricole.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,7 +23,17 @@ public class MemberController {
 
     @PostMapping
     public ResponseEntity<?> createMembers(@RequestBody List<CreateMember> requests) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(memberService.createMembers(requests));
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(memberService.createMembers(requests));
+
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+
+        } catch (MemberNotFoundException | CollectivityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        }
     }
 }

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Repository
 public class CollectivityRepository {
@@ -30,7 +32,7 @@ public class CollectivityRepository {
 
             ResultSet rs = ps.getGeneratedKeys();
             if (rs.next()) {
-                collectivity.setId(rs.getString(1));
+                collectivity.setId(String.valueOf(rs.getInt(1)));
             }
 
             insertMembersRelation(conn, collectivity);
@@ -47,12 +49,13 @@ public class CollectivityRepository {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, id);
+            ps.setInt(1, Integer.parseInt(id));
+
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
                 Collectivity c = new Collectivity();
-                c.setId(rs.getString("id"));
+                c.setId(String.valueOf(rs.getInt("id")));
                 c.setLocation(rs.getString("location"));
                 c.setFederationApproval(rs.getBoolean("federation_approval"));
                 return c;
@@ -76,7 +79,7 @@ public class CollectivityRepository {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
             for (Member member : collectivity.getMembers()) {
-                ps.setString(1, collectivity.getId());
+                ps.setInt(1, Integer.parseInt(collectivity.getId()));
                 ps.setString(2, member.getId());
                 ps.addBatch();
             }
@@ -84,5 +87,4 @@ public class CollectivityRepository {
             ps.executeBatch();
         }
     }
-
 }
