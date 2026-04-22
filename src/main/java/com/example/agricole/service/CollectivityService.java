@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class CollectivityService {
@@ -47,6 +48,10 @@ public class CollectivityService {
                 throw new BadRequestException("Federation approval required");
             }
 
+            if (req.getStructure() == null) {
+                throw new BadRequestException("Structure is required");
+            }
+
             List<Member> members = memberRepository.findByIds(req.getMembers());
 
             if (members.size() != req.getMembers().size()) {
@@ -62,21 +67,22 @@ public class CollectivityService {
                     .count();
 
             if (experiencedMembers < 5) {
-                throw new BadRequestException(
-                        "At least 5 members with 6 months experience required"
-                );
+                throw new BadRequestException("At least 5 experienced members required");
             }
 
             structureValidator.validateStructure(req, members);
 
             Collectivity collectivity = new Collectivity();
+            collectivity.setId(UUID.randomUUID().toString());
             collectivity.setLocation(req.getLocation());
             collectivity.setMembers(members);
             collectivity.setFederationApproval(true);
 
-            collectivityRepository.save(collectivity);
+            collectivityRepository.saveWithRelations(collectivity, req.getStructure());
 
-            result.add(collectivity);
+            Collectivity saved = collectivityRepository.findById(collectivity.getId());
+
+            result.add(saved);
         }
 
         return result;
