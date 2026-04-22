@@ -109,4 +109,8 @@ CREATE TABLE collectivity_structure (
                                         CONSTRAINT uq_vice_president UNIQUE (vice_president_id),
                                         CONSTRAINT uq_treasurer UNIQUE (treasurer_id),
                                         CONSTRAINT uq_secretary UNIQUE (secretary_id)
+
 );
+
+ALTER TABLE collectivity ADD COLUMN number VARCHAR(50) UNIQUE;
+ALTER TABLE collectivity ADD COLUMN name VARCHAR(255) UNIQUE;
