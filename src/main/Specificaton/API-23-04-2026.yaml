@@ -1,52 +1,123 @@
-openapi: 3.0.3
+openapi: 3.1.0
 
 info:
   title: Agricultural Federation API
-  version: 1.0.0
-  description: API de gestion des collectivités agricoles
+  version: 2.0.0
+  description: API for managing collectivities, members, and financial accounts
 
 tags:
   - name: Collectivities
-    description: Opérations liées aux collectivités
+    description: Operations related to collectivities
 
 paths:
+
   /collectivities/{id}:
     get:
       tags:
         - Collectivities
-      summary: Obtenir une collectivité par ID
+      summary: Get a collectivity by ID
       description: |
-        Permet de récupérer une collectivité à partir de son identifiant.
-        La réponse inclut la liste des membres associés à la collectivité.
+        Retrieves a collectivity by its unique identifier.
+        The response includes the list of members belonging to the collectivity.
       operationId: getCollectivityById
+
       parameters:
         - name: id
           in: path
           required: true
-          description: Identifiant unique de la collectivité
+          description: Unique identifier of the collectivity
           schema:
             type: string
+            example: "col-123"
+
       responses:
         "200":
-          description: Collectivité trouvée avec succès
+          description: Collectivity found successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Collectivity"
+
         "404":
-          description: Collectivité non trouvée
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Erreur interne du serveur
+          description: Collectivity not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+
+  /collectivities/{id}/financialAccounts:
+    get:
+      tags:
+        - Collectivities
+      summary: Get financial accounts of a collectivity
+      description: |
+        Returns the list of financial accounts (cash, mobile banking, bank)
+        of a collectivity with their current balance.
+
+        The query parameter `at` allows retrieving the balance at a specific date.
+        If historical tracking is not implemented, `at` is ignored.
+      operationId: getFinancialAccounts
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the collectivity
+          schema:
+            type: string
+            example: "col-123"
+
+        - name: at
+          in: query
+          required: true
+          description: Date at which the balances are requested
+          schema:
+            type: string
+            format: date
+            example: "2026-04-23"
+
+      responses:
+        "200":
+          description: List of financial accounts successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FinancialAccount"
+
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "404":
+          description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+
 components:
+
   schemas:
 
     Collectivity:
@@ -55,43 +126,59 @@ components:
         id:
           type: string
           example: "col-123"
+
         location:
           type: string
           example: "Antananarivo"
+
         federationApproval:
           type: boolean
           example: true
+
         number:
           type: string
           nullable: true
           example: "001"
+
         name:
           type: string
           nullable: true
-          example: "Coopérative A"
+          example: "Cooperative A"
+
         members:
           type: array
-          description: Liste des membres de la collectivité
+          description: List of members in the collectivity
           items:
             $ref: "#/components/schemas/Member"
+
         structure:
           $ref: "#/components/schemas/CollectivityStructure"
+
 
     Member:
       type: object
       properties:
         id:
           type: string
+          example: "m-001"
+
         firstName:
           type: string
+          example: "John"
+
         lastName:
           type: string
+          example: "Doe"
+
         birthDate:
           type: string
           format: date
+          example: "2000-01-01"
+
         gender:
           type: string
-          example: "M"
+          example: "MALE"
+
 
     CollectivityStructure:
       type: object
@@ -99,12 +186,100 @@ components:
         president:
           $ref: "#/components/schemas/Member"
 
+        vicePresident:
+          $ref: "#/components/schemas/Member"
+
+        treasurer:
+          $ref: "#/components/schemas/Member"
+
+        secretary:
+          $ref: "#/components/schemas/Member"
+
+
+    FinancialAccount:
+      type: object
+      required:
+        - id
+        - collectivityId
+        - type
+        - amount
+
+      properties:
+        id:
+          type: string
+          example: "acc-001"
+
+        collectivityId:
+          type: string
+          example: "col-123"
+
+        type:
+          type: string
+          description: Type of financial account
+          enum:
+            - CASH
+            - MOBILE_BANKING
+            - BANK
+
+        amount:
+          type: number
+          format: double
+          example: 150000.50
+
+        holderName:
+          type: string
+          nullable: true
+
+        mobileBankingService:
+          type: string
+          nullable: true
+          enum:
+            - ORANGE_MONEY
+            - MVOLA
+            - AIRTEL_MONEY
+
+        mobileNumber:
+          type: string
+          nullable: true
+
+        bankName:
+          type: string
+          nullable: true
+          enum:
+            - BNI
+            - BOA
+            - BFV_SG
+            - ACCES_BANK
+
+        bankCode:
+          type: integer
+          nullable: true
+
+        bankBranchCode:
+          type: integer
+          nullable: true
+
+        bankAccountNumber:
+          type: integer
+          nullable: true
+
+        bankAccountKey:
+          type: integer
+          nullable: true
+
+
     ErrorResponse:
       type: object
+      required:
+        - message
+        - timestamp
+
       properties:
         message:
           type: string
           example: "Collectivity not found"
+
         timestamp:
           type: string
           format: date-time
+          example: "2026-04-23T10:15:30Z"
