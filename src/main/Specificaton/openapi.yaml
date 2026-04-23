@@ -235,6 +235,47 @@ paths:
         403:
           $ref: '#/components/responses/Forbidden'
 
+  /collectivities/{id}:
+    get:
+      tags:
+        - Collectivities
+      summary: Get a collectivity by ID
+      description: |
+        Retrieves a collectivity by its unique identifier.
+        The response includes the list of members belonging to the collectivity.
+      operationId: getCollectivityById
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the collectivity
+          schema:
+            type: string
+            example: "col-123"
+
+      responses:
+        "200":
+          description: Collectivity found successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collectivity"
+
+        "404":
+          description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
 
   responses:

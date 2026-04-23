@@ -116,85 +116,235 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
 
+
+
 components:
 
+  responses:
+
+    BadRequest:
+      description: Requête invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Non authentifié
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Accès interdit
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Ressource non trouvée
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
   schemas:
+
+    # =========================
+    # EXISTING DOMAIN (original)
+    # =========================
+
+    CollectiviteCreate:
+      type: object
+      required: [nom, ville, specialite, cotisationAnnuelle]
+      properties:
+        nom:
+          type: string
+        ville:
+          type: string
+        specialite:
+          type: string
+        cotisationAnnuelle:
+          type: number
+
+    Parrain:
+      type: object
+      required: [membreId, collectiviteId, relation]
+      properties:
+        membreId:
+          type: integer
+        collectiviteId:
+          type: integer
+        relation:
+          type: string
+
+    MembreCreate:
+      type: object
+      required:
+        - nom
+        - prenom
+        - dateNaissance
+        - genre
+        - telephone
+        - email
+      properties:
+        nom:
+          type: string
+        prenom:
+          type: string
+        dateNaissance:
+          type: string
+          format: date
+        genre:
+          type: string
+          enum: [masculin, feminin]
+        adresse:
+          type: string
+        metier:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+
+    CandidatureCreate:
+      type: object
+      required:
+        - collectiviteId
+        - candidat
+        - parrains
+        - paiement
+      properties:
+        collectiviteId:
+          type: integer
+        candidat:
+          $ref: '#/components/schemas/MembreCreate'
+        parrains:
+          type: array
+          minItems: 2
+          items:
+            $ref: '#/components/schemas/Parrain'
+        paiement:
+          type: object
+          required: [fraisAdhesion, cotisationAnnuelle, mode]
+          properties:
+            fraisAdhesion:
+              type: number
+            cotisationAnnuelle:
+              type: number
+            montantTotal:
+              type: number
+            mode:
+              type: string
+              enum: [mobile_money, virement]
+
+    Paiement:
+      type: object
+      required: [membreId, montant, mode, date]
+      properties:
+        membreId:
+          type: integer
+        montant:
+          type: number
+        mode:
+          type: string
+          enum: [espece, virement, mobile_money]
+        date:
+          type: string
+          format: date
+
+    Compte:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [caisse, bancaire, mobile_money]
+        titulaire:
+          type: string
+        banque:
+          type: string
+        numero:
+          type: string
+        solde:
+          type: number
+
+    Activite:
+      type: object
+      properties:
+        nom:
+          type: string
+        date:
+          type: string
+          format: date
+        obligatoire:
+          type: boolean
+
+    Presence:
+      type: object
+      properties:
+        membreId:
+          type: integer
+        present:
+          type: boolean
+        excuse:
+          type: boolean
+
+    Statistiques:
+      type: object
+      properties:
+        tauxAssiduite:
+          type: number
+        tauxCotisation:
+          type: number
+        nombreMembres:
+          type: integer
+        nouveauxAdherents:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: integer
 
     Collectivity:
       type: object
       properties:
         id:
           type: string
-          example: "col-123"
-
         location:
           type: string
-          example: "Antananarivo"
-
         federationApproval:
           type: boolean
-          example: true
-
         number:
           type: string
           nullable: true
-          example: "001"
-
         name:
           type: string
           nullable: true
-          example: "Cooperative A"
-
         members:
           type: array
-          description: List of members in the collectivity
           items:
-            $ref: "#/components/schemas/Member"
-
-        structure:
-          $ref: "#/components/schemas/CollectivityStructure"
-
+            $ref: '#/components/schemas/Member'
 
     Member:
       type: object
       properties:
         id:
           type: string
-          example: "m-001"
-
         firstName:
           type: string
-          example: "John"
-
         lastName:
           type: string
-          example: "Doe"
-
         birthDate:
           type: string
           format: date
-          example: "2000-01-01"
-
         gender:
           type: string
-          example: "MALE"
-
-
-    CollectivityStructure:
-      type: object
-      properties:
-        president:
-          $ref: "#/components/schemas/Member"
-
-        vicePresident:
-          $ref: "#/components/schemas/Member"
-
-        treasurer:
-          $ref: "#/components/schemas/Member"
-
-        secretary:
-          $ref: "#/components/schemas/Member"
-
 
     FinancialAccount:
       type: object
@@ -203,28 +353,17 @@ components:
         - collectivityId
         - type
         - amount
-
       properties:
         id:
           type: string
-          example: "acc-001"
-
         collectivityId:
           type: string
-          example: "col-123"
-
         type:
           type: string
-          description: Type of financial account
-          enum:
-            - CASH
-            - MOBILE_BANKING
-            - BANK
-
+          enum: [CASH, MOBILE_BANKING, BANK]
         amount:
           type: number
           format: double
-          example: 150000.50
 
         holderName:
           type: string
@@ -233,10 +372,6 @@ components:
         mobileBankingService:
           type: string
           nullable: true
-          enum:
-            - ORANGE_MONEY
-            - MVOLA
-            - AIRTEL_MONEY
 
         mobileNumber:
           type: string
@@ -245,11 +380,6 @@ components:
         bankName:
           type: string
           nullable: true
-          enum:
-            - BNI
-            - BOA
-            - BFV_SG
-            - ACCES_BANK
 
         bankCode:
           type: integer
@@ -267,19 +397,14 @@ components:
           type: integer
           nullable: true
 
-
     ErrorResponse:
       type: object
       required:
         - message
         - timestamp
-
       properties:
         message:
           type: string
-          example: "Collectivity not found"
-
         timestamp:
           type: string
           format: date-time
-          example: "2026-04-23T10:15:30Z"
