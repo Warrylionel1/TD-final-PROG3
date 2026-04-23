@@ -235,46 +235,7 @@ paths:
         403:
           $ref: '#/components/responses/Forbidden'
 
-  /collectivities/{id}:
-    get:
-      tags:
-        - Collectivities
-      summary: Get a collectivity by ID
-      description: |
-        Retrieves a collectivity by its unique identifier.
-        The response includes the list of members belonging to the collectivity.
-      operationId: getCollectivityById
 
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Unique identifier of the collectivity
-          schema:
-            type: string
-            example: "col-123"
-
-      responses:
-        "200":
-          description: Collectivity found successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Collectivity"
-
-        "404":
-          description: Collectivity not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
 components:
 
@@ -309,6 +270,10 @@ components:
             $ref: '#/components/schemas/Error'
 
   schemas:
+
+    # =========================
+    # EXISTING DOMAIN (original)
+    # =========================
 
     CollectiviteCreate:
       type: object
@@ -464,3 +429,105 @@ components:
           type: string
         code:
           type: integer
+
+    # =========================
+    # NEW DOMAIN (from second spec)
+    # =========================
+
+    Collectivity:
+      type: object
+      properties:
+        id:
+          type: string
+        location:
+          type: string
+        federationApproval:
+          type: boolean
+        number:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        gender:
+          type: string
+
+    FinancialAccount:
+      type: object
+      required:
+        - id
+        - collectivityId
+        - type
+        - amount
+      properties:
+        id:
+          type: string
+        collectivityId:
+          type: string
+        type:
+          type: string
+          enum: [CASH, MOBILE_BANKING, BANK]
+        amount:
+          type: number
+          format: double
+
+        holderName:
+          type: string
+          nullable: true
+
+        mobileBankingService:
+          type: string
+          nullable: true
+
+        mobileNumber:
+          type: string
+          nullable: true
+
+        bankName:
+          type: string
+          nullable: true
+
+        bankCode:
+          type: integer
+          nullable: true
+
+        bankBranchCode:
+          type: integer
+          nullable: true
+
+        bankAccountNumber:
+          type: integer
+          nullable: true
+
+        bankAccountKey:
+          type: integer
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+        - timestamp
+      properties:
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
