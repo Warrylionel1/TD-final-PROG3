@@ -1,5 +1,6 @@
 package com.example.agricole.repository;
 
+import com.example.agricole.dto.CreateCollectivityStructure;
 import com.example.agricole.entity.Collectivity;
 import com.example.agricole.entity.Member;
 import org.springframework.stereotype.Repository;
@@ -15,20 +16,53 @@ public class CollectivityRepository {
         this.dataSource = dataSource;
     }
 
-    public void save(Collectivity collectivity) {
-        if (collectivity.getId() == null) {
-            collectivity.setId(java.util.UUID.randomUUID().toString());
-        }
-        String sql = "INSERT INTO collectivity (id, location, federation_approval) VALUES (?, ?, ?)";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, collectivity.getId());
-            ps.setString(2, collectivity.getLocation());
-            ps.setBoolean(3, collectivity.isFederationApproval());
-            ps.executeUpdate();
-            insertMembersRelation(conn, collectivity);
+    public void saveWithRelations(Collectivity collectivity, CreateCollectivityStructure structure) {
+        String insertCollectivity = """
+            INSERT INTO collectivity (id, location, specialty, creation_date, federation_approval)
+            VALUES (?, ?, ?, CURRENT_DATE, ?)
+        """;
+        String insertRelation = """
+            INSERT INTO collectivity_member (collectivity_id, member_id)
+            VALUES (?, ?)
+        """;
+        String insertStructure = """
+            INSERT INTO collectivity_structure
+            (collectivity_id, president_id, vice_president_id, treasurer_id, secretary_id)
+            VALUES (?, ?, ?, ?, ?)
+        """;
+
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement ps = conn.prepareStatement(insertCollectivity)) {
+                ps.setString(1, collectivity.getId());
+                ps.setString(2, collectivity.getLocation());
+                ps.setString(3, "Default");
+                ps.setBoolean(4, collectivity.isFederationApproval());
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(insertRelation)) {
+                for (Member m : collectivity.getMembers()) {
+                    ps.setString(1, collectivity.getId());
+                    ps.setString(2, m.getId());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(insertStructure)) {
+                ps.setString(1, collectivity.getId());
+                ps.setString(2, structure.getPresident());
+                ps.setString(3, structure.getVicePresident());
+                ps.setString(4, structure.getTreasurer());
+                ps.setString(5, structure.getSecretary());
+                ps.executeUpdate();
+            }
+
+            conn.commit();
         } catch (SQLException e) {
-            throw new RuntimeException("Error saving collectivity", e);
+            throw new RuntimeException("Error saving collectivity with relations", e);
         }
     }
 
@@ -90,21 +124,6 @@ public class CollectivityRepository {
             return null;
         } catch (SQLException e) {
             throw new RuntimeException("Error finding collectivity", e);
-        }
-    }
-
-    private void insertMembersRelation(Connection conn, Collectivity collectivity) throws SQLException {
-        if (collectivity.getMembers() == null || collectivity.getMembers().isEmpty()) {
-            return;
-        }
-        String sql = "INSERT INTO collectivity_member (collectivity_id, member_id) VALUES (?, ?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (Member member : collectivity.getMembers()) {
-                ps.setString(1, collectivity.getId());
-                ps.setString(2, member.getId());
-                ps.addBatch();
-            }
-            ps.executeBatch();
         }
     }
 }
