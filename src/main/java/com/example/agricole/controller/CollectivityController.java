@@ -87,4 +87,14 @@ public class CollectivityController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return ResponseEntity.ok(collectivityService.getTransactions(id, from, to));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getById(@PathVariable String id) {
+        try {
+            Collectivity result = collectivityService.getCollectivityById(id);
+            return ResponseEntity.ok(result);
+        }catch (CollectivityNotFoundException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
 }

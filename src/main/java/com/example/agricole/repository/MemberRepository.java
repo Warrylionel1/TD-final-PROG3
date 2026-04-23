@@ -163,4 +163,44 @@ public class MemberRepository {
 
         return m;
     }
+
+    public List<Member> findByCollectivityId(String collectivityId) {
+
+        String sql = """
+        SELECT
+            m.id,
+            m.first_name,
+            m.last_name,
+            m.birth_date,
+            m.gender,
+            m.address,
+            m.profession,
+            m.phone_number,
+            m.email,
+            m.occupation,
+            m.join_date
+        FROM member m
+        INNER JOIN collectivity_member cm
+            ON cm.member_id = m.id
+        WHERE cm.collectivity_id = ?
+    """;
+
+        List<Member> members = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, collectivityId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                members.add(mapRowToMember(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching members by collectivity", e);
+        }
+
+        return members;
+    }
 }

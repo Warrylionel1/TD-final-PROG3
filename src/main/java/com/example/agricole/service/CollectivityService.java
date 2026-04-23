@@ -151,4 +151,14 @@ public class CollectivityService {
         if (col == null) throw new CollectivityNotFoundException(collectivityId);
         return transactionRepository.findByCollectivityIdAndDateRange(collectivityId, from, to);
     }
+
+    public Collectivity getCollectivityById(String id) {
+        Collectivity c = collectivityRepository.findById(id);
+        if (c == null) {
+            throw new RuntimeException("Collectivity not found");
+        }
+        List<Member> members = memberRepository.findByCollectivityId(id);
+        c.setMembers(members);
+        return c;
+    }
 }
