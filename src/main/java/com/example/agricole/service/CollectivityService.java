@@ -155,10 +155,18 @@ public class CollectivityService {
     public Collectivity getCollectivityById(String id) {
         Collectivity c = collectivityRepository.findById(id);
         if (c == null) {
-            throw new RuntimeException("Collectivity not found");
+            throw new CollectivityNotFoundException("Collectivity not found");
         }
         List<Member> members = memberRepository.findByCollectivityId(id);
         c.setMembers(members);
         return c;
+    }
+
+    public List<FinancialAccount> getFinancialAccounts(String collectivityId, LocalDate at) {
+        Collectivity c = collectivityRepository.findById(collectivityId);
+        if (c == null) {
+            throw new CollectivityNotFoundException(collectivityId);
+        }
+        return financialAccountRepository.findByCollectivityId(collectivityId);
     }
 }

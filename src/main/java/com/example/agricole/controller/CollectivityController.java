@@ -97,4 +97,22 @@ public class CollectivityController {
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
+
+    @GetMapping("/{id}/financialAccounts")
+    public ResponseEntity<?> getFinancialAccounts(
+            @PathVariable String id,
+            @RequestParam("at") LocalDate at
+    ) {
+        try {
+            return ResponseEntity.ok(
+                    collectivityService.getFinancialAccounts(id, at)
+            );
+        } catch (CollectivityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Internal server error");
+        }
+    }
 }

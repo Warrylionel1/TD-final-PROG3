@@ -1,0 +1,110 @@
+openapi: 3.0.3
+
+info:
+  title: Agricultural Federation API
+  version: 1.0.0
+  description: API de gestion des collectivités agricoles
+
+tags:
+  - name: Collectivities
+    description: Opérations liées aux collectivités
+
+paths:
+  /collectivities/{id}:
+    get:
+      tags:
+        - Collectivities
+      summary: Obtenir une collectivité par ID
+      description: |
+        Permet de récupérer une collectivité à partir de son identifiant.
+        La réponse inclut la liste des membres associés à la collectivité.
+      operationId: getCollectivityById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant unique de la collectivité
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Collectivité trouvée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collectivity"
+        "404":
+          description: Collectivité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Erreur interne du serveur
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+
+    Collectivity:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "col-123"
+        location:
+          type: string
+          example: "Antananarivo"
+        federationApproval:
+          type: boolean
+          example: true
+        number:
+          type: string
+          nullable: true
+          example: "001"
+        name:
+          type: string
+          nullable: true
+          example: "Coopérative A"
+        members:
+          type: array
+          description: Liste des membres de la collectivité
+          items:
+            $ref: "#/components/schemas/Member"
+        structure:
+          $ref: "#/components/schemas/CollectivityStructure"
+
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        gender:
+          type: string
+          example: "M"
+
+    CollectivityStructure:
+      type: object
+      properties:
+        president:
+          $ref: "#/components/schemas/Member"
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Collectivity not found"
+        timestamp:
+          type: string
+          format: date-time

@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -128,5 +130,41 @@ public class FinancialAccountRepository {
             return acc;
         }
         throw new IllegalArgumentException("Unknown account type: " + type);
+    }
+
+    public List<FinancialAccount> findByCollectivityId(String collectivityId) {
+
+        String sql = """
+        SELECT
+            id,
+            collectivity_id,
+            type,
+            amount,
+            holder_name,
+            mobile_banking_service,
+            mobile_number,
+            bank_name,
+            bank_code,
+            bank_branch_code,
+            bank_account_number,
+            bank_account_key
+        FROM financial_account
+        WHERE collectivity_id = ?
+    """;
+
+        List<FinancialAccount> accounts = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, collectivityId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                accounts.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching financial accounts", e);
+        }
+        return accounts;
     }
 }
