@@ -1,6 +1,8 @@
 package com.example.agricole.controller;
 
 import com.example.agricole.dto.CreateMember;
+import com.example.agricole.dto.CreateMemberPayment;
+import com.example.agricole.entity.MemberPayment;
 import com.example.agricole.exception.BadRequestException;
 import com.example.agricole.exception.CollectivityNotFoundException;
 import com.example.agricole.exception.MemberNotFoundException;
@@ -35,5 +37,14 @@ public class MemberController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(e.getMessage());
         }
+    }
+
+    @PostMapping("/{id}/payments")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<List<MemberPayment>> createPayments(
+            @PathVariable String id,
+            @RequestBody List<CreateMemberPayment> payments) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(memberService.createPayments(id, payments));
     }
 }

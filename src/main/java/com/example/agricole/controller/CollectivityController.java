@@ -2,16 +2,21 @@ package com.example.agricole.controller;
 
 import com.example.agricole.dto.AssignIdentityRequest;
 import com.example.agricole.dto.CreateCollectivity;
+import com.example.agricole.dto.CreateMembershipFee;
 import com.example.agricole.entity.Collectivity;
+import com.example.agricole.entity.CollectivityTransaction;
+import com.example.agricole.entity.MembershipFee;
 import com.example.agricole.exception.BadRequestException;
 import com.example.agricole.exception.CollectivityNotFoundException;
 import com.example.agricole.exception.ConflictException;
 import com.example.agricole.exception.MemberNotFoundException;
 import com.example.agricole.service.CollectivityService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -61,5 +66,25 @@ public class CollectivityController {
         } catch (BadRequestException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/{id}/membershipFees")
+    public ResponseEntity<List<MembershipFee>> getMembershipFees(@PathVariable String id) {
+        return ResponseEntity.ok(collectivityService.getMembershipFees(id));
+    }
+
+    @PostMapping("/{id}/membershipFees")
+    public ResponseEntity<List<MembershipFee>> createMembershipFees(
+            @PathVariable String id,
+            @RequestBody List<CreateMembershipFee> fees) {
+        return ResponseEntity.ok(collectivityService.createMembershipFees(id, fees));
+    }
+
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<List<CollectivityTransaction>> getTransactions(
+            @PathVariable String id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(collectivityService.getTransactions(id, from, to));
     }
 }
