@@ -6,6 +6,8 @@ import com.example.agricole.entity.Member;
 import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Repository
 public class CollectivityRepository {
@@ -125,5 +127,26 @@ public class CollectivityRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Error finding collectivity", e);
         }
+    }
+
+    public List<Collectivity> findAll() {
+        String sql = "SELECT id, location, federation_approval, number, name FROM collectivity";
+        List<Collectivity> list = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Collectivity c = new Collectivity();
+                c.setId(rs.getString("id"));
+                c.setLocation(rs.getString("location"));
+                c.setFederationApproval(rs.getBoolean("federation_approval"));
+                c.setNumber(rs.getString("number"));
+                c.setName(rs.getString("name"));
+                list.add(c);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching all collectivities", e);
+        }
+        return list;
     }
 }
