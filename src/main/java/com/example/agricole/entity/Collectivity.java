@@ -15,7 +15,7 @@ public class Collectivity {
     private CollectivityStructure structure;
     private List<Member> members;
     private boolean federationApproval;
-    private String number;
+    private Integer number;
     private String name;
 
     public boolean hasAssignedIdentity() {

@@ -1,6 +1,7 @@
 package com.example.agricole.service;
 
 import com.example.agricole.dto.*;
+import com.example.agricole.entity.Collectivity;
 import com.example.agricole.enums.Frequency;
 import com.example.agricole.repository.CollectivityRepository;
 import com.example.agricole.repository.StatisticsRepository;
@@ -77,16 +78,34 @@ public class StatisticsService {
             long newMembers =
                     repository.countNewMembers(id, from, to);
 
-            double expected =
-                    calculateExpected(fees, from, to);
-
             long upToDate = 0;
 
             for (MemberDescription m : members) {
 
                 double paid = payments.getOrDefault(m.getId(), 0.0);
 
-                if (paid >= expected) {
+                boolean ok = true;
+
+                for (MembershipFeeRaw fee : fees) {
+
+                    long periods = switch (Frequency.valueOf(fee.getFrequency())) {
+                        case WEEKLY -> ChronoUnit.WEEKS.between(from, to);
+                        case MONTHLY -> ChronoUnit.MONTHS.between(from, to);
+                        case ANNUALLY -> ChronoUnit.YEARS.between(from, to);
+                        case PUNCTUALLY -> 1;
+                    };
+
+                    if (periods < 1) periods = 1;
+
+                    double expected = periods * fee.getAmount();
+
+                    if (paid < expected) {
+                        ok = false;
+                        break;
+                    }
+                }
+
+                if (ok) {
                     upToDate++;
                 }
             }
@@ -98,7 +117,15 @@ public class StatisticsService {
             CollectivityOverallStatistics stats =
                     new CollectivityOverallStatistics();
 
-            stats.setCollectivityInformation(null);
+            Collectivity c = collectivityRepository.findById(id);
+
+            if (c != null) {
+                CollectivityInformation info = new CollectivityInformation();
+                info.setName(c.getName());
+                info.setNumber(c.getNumber());
+                stats.setCollectivityInformation(info);
+            }
+
             stats.setNewMembersNumber((int) newMembers);
             stats.setOverallMemberCurrentDuePercentage(percentage);
 

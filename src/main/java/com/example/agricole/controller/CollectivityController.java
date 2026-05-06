@@ -155,22 +155,3 @@ public class CollectivityController {
         }
     }
 }
-
-/*
-*
-
-    @GetMapping("/{id}/statistics")
-    public ResponseEntity<List<CollectivityLocalStatistics>> getLocalStatistics(
-            @PathVariable String id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return ResponseEntity.ok(collectivityService.getLocalStatistics(id, from, to));
-    }
-
-    @GetMapping("/statistics")
-    public ResponseEntity<List<CollectivityOverallStatistics>> getOverallStatistics(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return ResponseEntity.ok(collectivityService.getOverallStatistics(from, to));
-    }
-   */

@@ -173,7 +173,7 @@ public class CollectivityRepository {
             c.setId(rs.getString("id"));
             c.setLocation(rs.getString("location"));
             c.setFederationApproval(rs.getBoolean("federation_approval"));
-            c.setNumber(rs.getString("number"));
+            c.setNumber(rs.getInt("number"));
             c.setName(rs.getString("name"));
 
             return c;
@@ -202,7 +202,7 @@ public class CollectivityRepository {
                 c.setId(rs.getString("id"));
                 c.setLocation(rs.getString("location"));
                 c.setFederationApproval(rs.getBoolean("federation_approval"));
-                c.setNumber(rs.getString("number"));
+                c.setNumber(rs.getInt("number"));
                 c.setName(rs.getString("name"));
 
                 list.add(c);
