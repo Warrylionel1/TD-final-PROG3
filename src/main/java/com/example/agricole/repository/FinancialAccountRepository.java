@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -164,6 +165,33 @@ public class FinancialAccountRepository {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error fetching financial accounts", e);
+        }
+        return accounts;
+    }
+
+    public List<FinancialAccount> findAllByCollectivityIdWithBalanceAt(String collectivityId, LocalDate at) {
+        String sql = """
+        SELECT fa.*, COALESCE(SUM(ct.amount), 0) AS computed_balance
+        FROM financial_account fa
+        LEFT JOIN collectivity_transaction ct 
+               ON fa.id = ct.account_credited_id 
+              AND ct.creation_date <= ?
+        WHERE fa.collectivity_id = ?
+        GROUP BY fa.id
+    """;
+        List<FinancialAccount> accounts = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDate(1, Date.valueOf(at));
+            ps.setString(2, collectivityId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                FinancialAccount account = mapRow(rs);
+                account.setAmount(rs.getDouble("computed_balance"));
+                accounts.add(account);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching financial accounts with balance at date", e);
         }
         return accounts;
     }
