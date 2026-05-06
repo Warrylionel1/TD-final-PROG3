@@ -200,4 +200,12 @@ public class CollectivityService {
         }
         return result;
     }
+
+    public List<FinancialAccount> getFinancialAccounts(String collectivityId, LocalDate at) {
+        Collectivity c = collectivityRepository.findById(collectivityId);
+        if (c == null) {
+            throw new CollectivityNotFoundException(collectivityId);
+        }
+        return financialAccountRepository.findAllByCollectivityIdWithBalanceAt(collectivityId, at);
+    }
 }
