@@ -1,8 +1,6 @@
 package com.example.agricole.controller;
 
-import com.example.agricole.dto.AssignIdentityRequest;
-import com.example.agricole.dto.CreateCollectivity;
-import com.example.agricole.dto.CreateMembershipFee;
+import com.example.agricole.dto.*;
 import com.example.agricole.entity.Collectivity;
 import com.example.agricole.entity.CollectivityTransaction;
 import com.example.agricole.entity.MembershipFee;
@@ -115,4 +113,20 @@ public class CollectivityController {
                     .body("Internal server error");
         }
     }
+
+    @GetMapping("/{id}/statistics")
+    public ResponseEntity<List<CollectivityLocalStatistics>> getLocalStatistics(
+            @PathVariable String id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(collectivityService.getLocalStatistics(id, from, to));
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<List<CollectivityOverallStatistics>> getOverallStatistics(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(collectivityService.getOverallStatistics(from, to));
+    }
+
 }
