@@ -9,6 +9,7 @@ import com.example.agricole.exception.CollectivityNotFoundException;
 import com.example.agricole.exception.ConflictException;
 import com.example.agricole.exception.MemberNotFoundException;
 import com.example.agricole.service.CollectivityService;
+import com.example.agricole.service.StatisticsService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +23,12 @@ import java.util.List;
 public class CollectivityController {
 
     private final CollectivityService collectivityService;
+    private final StatisticsService statisticsService;
 
-    public CollectivityController(CollectivityService collectivityService) {
+    public CollectivityController(CollectivityService collectivityService,
+                                  StatisticsService statisticsService) {
         this.collectivityService = collectivityService;
+        this.statisticsService = statisticsService;
     }
 
     @PostMapping
@@ -115,6 +119,47 @@ public class CollectivityController {
     }
 
     @GetMapping("/{id}/statistics")
+    public ResponseEntity<?> getLocalStatistics(
+            @PathVariable String id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        try {
+            return ResponseEntity.ok(
+                    statisticsService.getLocalStatistics(id, from, to)
+            );
+
+        } catch (CollectivityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<?> getOverallStatistics(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        try {
+            return ResponseEntity.ok(
+                    statisticsService.getOverallStatistics(from, to)
+            );
+
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
+    }
+}
+
+/*
+*
+
+    @GetMapping("/{id}/statistics")
     public ResponseEntity<List<CollectivityLocalStatistics>> getLocalStatistics(
             @PathVariable String id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -128,5 +173,4 @@ public class CollectivityController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return ResponseEntity.ok(collectivityService.getOverallStatistics(from, to));
     }
-
-}
+   */

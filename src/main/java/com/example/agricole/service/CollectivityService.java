@@ -1,23 +1,10 @@
 package com.example.agricole.service;
 
-import com.example.agricole.dto.AssignIdentityRequest;
-import com.example.agricole.dto.CollectivityInformation;
-import com.example.agricole.dto.CollectivityLocalStatistics;
-import com.example.agricole.dto.CollectivityOverallStatistics;
-import com.example.agricole.dto.CreateCollectivity;
-import com.example.agricole.dto.CreateMembershipFee;
+import com.example.agricole.dto.*;
 import com.example.agricole.entity.*;
 import com.example.agricole.enums.ActivityStatus;
-import com.example.agricole.exception.BadRequestException;
-import com.example.agricole.exception.CollectivityNotFoundException;
-import com.example.agricole.exception.ConflictException;
-import com.example.agricole.exception.MemberNotFoundException;
-import com.example.agricole.repository.CollectivityRepository;
-import com.example.agricole.repository.FinancialAccountRepository;
-import com.example.agricole.repository.MemberRepository;
-import com.example.agricole.repository.MembershipFeeRepository;
-import com.example.agricole.repository.StatisticsRepository;
-import com.example.agricole.repository.TransactionRepository;
+import com.example.agricole.exception.*;
+import com.example.agricole.repository.*;
 import com.example.agricole.validator.CollectivityStructureValidator;
 import com.example.agricole.validator.MemberExperienceValidator;
 import org.springframework.stereotype.Service;
@@ -37,7 +24,7 @@ public class CollectivityService {
     private final MembershipFeeRepository membershipFeeRepository;
     private final TransactionRepository transactionRepository;
     private final FinancialAccountRepository financialAccountRepository;
-    private final StatisticsRepository statisticsRepository;
+    private final StatisticsService statisticsService;
 
     public CollectivityService(
             CollectivityRepository collectivityRepository,
@@ -47,7 +34,7 @@ public class CollectivityService {
             MembershipFeeRepository membershipFeeRepository,
             TransactionRepository transactionRepository,
             FinancialAccountRepository financialAccountRepository,
-            StatisticsRepository statisticsRepository
+            StatisticsService statisticsService
     ) {
         this.collectivityRepository = collectivityRepository;
         this.memberRepository = memberRepository;
@@ -56,24 +43,39 @@ public class CollectivityService {
         this.membershipFeeRepository = membershipFeeRepository;
         this.transactionRepository = transactionRepository;
         this.financialAccountRepository = financialAccountRepository;
-        this.statisticsRepository = statisticsRepository;
+        this.statisticsService = statisticsService;
+    }
+
+    private Collectivity getCollectivityOrThrow(String id) {
+        Collectivity collectivity = collectivityRepository.findById(id);
+
+        if (collectivity == null) {
+            throw new CollectivityNotFoundException(id);
+        }
+
+        return collectivity;
     }
 
     public List<Collectivity> createCollectivities(List<CreateCollectivity> requests) {
+
         List<Collectivity> result = new ArrayList<>();
 
         for (CreateCollectivity req : requests) {
+
             if (!req.isFederationApproval()) {
                 throw new BadRequestException("Federation approval required");
             }
+
             if (req.getStructure() == null) {
                 throw new BadRequestException("Structure is required");
             }
 
             List<Member> members = memberRepository.findByIds(req.getMembers());
+
             if (members.size() != req.getMembers().size()) {
                 throw new MemberNotFoundException("Some members not found");
             }
+
             if (members.size() < 10) {
                 throw new BadRequestException("Minimum 10 members required");
             }
@@ -81,6 +83,7 @@ public class CollectivityService {
             long experiencedMembers = members.stream()
                     .filter(experienceValidator::has6MonthsExperience)
                     .count();
+
             if (experiencedMembers < 5) {
                 throw new BadRequestException("At least 5 experienced members required");
             }
@@ -93,51 +96,70 @@ public class CollectivityService {
             collectivity.setMembers(members);
             collectivity.setFederationApproval(true);
 
-            collectivityRepository.saveWithRelations(collectivity, req.getStructure());
+            collectivityRepository.saveWithRelations(
+                    collectivity,
+                    req.getStructure()
+            );
 
             CashAccount cashAccount = new CashAccount();
             cashAccount.setCollectivityId(collectivity.getId());
             cashAccount.setAmount(0);
+
             financialAccountRepository.save(cashAccount);
 
-            Collectivity saved = collectivityRepository.findById(collectivity.getId());
+            Collectivity saved = getCollectivityOrThrow(collectivity.getId());
             result.add(saved);
         }
+
         return result;
     }
 
     public Collectivity assignIdentity(String collectivityId, AssignIdentityRequest request) {
-        Collectivity collectivity = collectivityRepository.findById(collectivityId);
-        if (collectivity == null) {
-            throw new CollectivityNotFoundException(collectivityId);
-        }
+
+        Collectivity collectivity = getCollectivityOrThrow(collectivityId);
+
         if (collectivity.hasAssignedIdentity()) {
-            throw new ConflictException("This collectivity has already a number and a name");
+            throw new ConflictException("Identity already assigned");
         }
+
         if (collectivityRepository.existsByNumber(request.getNumber())) {
-            throw new ConflictException("Number " + request.getNumber() + " is already used");
+            throw new ConflictException("Number already used");
         }
+
         if (collectivityRepository.existsByName(request.getName())) {
-            throw new ConflictException("Name " + request.getName() + " is already used");
+            throw new ConflictException("Name already used");
         }
-        collectivityRepository.updateNumberAndName(collectivityId, request.getNumber(), request.getName());
-        return collectivityRepository.findById(collectivityId);
+
+        collectivityRepository.updateNumberAndName(
+                collectivityId,
+                request.getNumber(),
+                request.getName()
+        );
+
+        return getCollectivityOrThrow(collectivityId);
     }
 
     public List<MembershipFee> getMembershipFees(String collectivityId) {
-        Collectivity col = collectivityRepository.findById(collectivityId);
-        if (col == null) throw new CollectivityNotFoundException(collectivityId);
+
+        getCollectivityOrThrow(collectivityId);
+
         return membershipFeeRepository.findByCollectivityId(collectivityId);
     }
 
-    public List<MembershipFee> createMembershipFees(String collectivityId, List<CreateMembershipFee> requests) {
-        Collectivity col = collectivityRepository.findById(collectivityId);
-        if (col == null) throw new CollectivityNotFoundException(collectivityId);
+    public List<MembershipFee> createMembershipFees(
+            String collectivityId,
+            List<CreateMembershipFee> requests) {
+
+        getCollectivityOrThrow(collectivityId);
+
         List<MembershipFee> saved = new ArrayList<>();
+
         for (CreateMembershipFee dto : requests) {
+
             if (dto.getAmount() < 0) {
                 throw new BadRequestException("Amount cannot be negative");
             }
+
             MembershipFee fee = new MembershipFee();
             fee.setCollectivityId(collectivityId);
             fee.setEligibleFrom(dto.getEligibleFrom());
@@ -145,67 +167,60 @@ public class CollectivityService {
             fee.setAmount(dto.getAmount());
             fee.setLabel(dto.getLabel());
             fee.setStatus(ActivityStatus.ACTIVE);
+
             saved.add(membershipFeeRepository.save(fee));
         }
+
         return saved;
     }
 
-    public List<CollectivityTransaction> getTransactions(String collectivityId, LocalDate from, LocalDate to) {
+    public List<CollectivityTransaction> getTransactions(
+            String collectivityId,
+            LocalDate from,
+            LocalDate to) {
+
         if (from == null || to == null) {
-            throw new BadRequestException("Query parameters 'from' and 'to' are mandatory");
+            throw new BadRequestException("from and to are required");
         }
-        Collectivity col = collectivityRepository.findById(collectivityId);
-        if (col == null) throw new CollectivityNotFoundException(collectivityId);
-        return transactionRepository.findByCollectivityIdAndDateRange(collectivityId, from, to);
+
+        getCollectivityOrThrow(collectivityId);
+
+        return transactionRepository
+                .findByCollectivityIdAndDateRange(collectivityId, from, to);
     }
 
     public Collectivity getCollectivityById(String id) {
-        Collectivity c = collectivityRepository.findById(id);
-        if (c == null) {
-            throw new RuntimeException("Collectivity not found");
-        }
-        List<Member> members = memberRepository.findByCollectivityId(id);
-        c.setMembers(members);
+
+        Collectivity c = getCollectivityOrThrow(id);
+        c.setMembers(memberRepository.findByCollectivityId(id));
+
         return c;
     }
 
     public List<CollectivityLocalStatistics> getLocalStatistics(
-            String collectivityId, LocalDate from, LocalDate to) {
-        if (collectivityRepository.findById(collectivityId) == null) {
-            throw new CollectivityNotFoundException(collectivityId);
-        }
-        return statisticsRepository.getLocalStatistics(collectivityId, from, to);
+            String collectivityId,
+            LocalDate from,
+            LocalDate to) {
+
+        getCollectivityOrThrow(collectivityId);
+
+        return statisticsService.getLocalStatistics(collectivityId, from, to);
     }
 
     public List<CollectivityOverallStatistics> getOverallStatistics(
-            LocalDate from, LocalDate to) {
-        List<Collectivity> all = collectivityRepository.findAll();
-        List<CollectivityOverallStatistics> result = new ArrayList<>();
+            LocalDate from,
+            LocalDate to) {
 
-        for (Collectivity c : all) {
-            String colId = c.getId();
-
-            int newMembers = (int) statisticsRepository.countNewMembers(colId, from, to);
-            double totalRequired = statisticsRepository.totalActiveRequired(colId, to);
-            long upToDate = statisticsRepository.countUpToDateMembers(colId, to, totalRequired);
-
-            List<Member> members = memberRepository.findByCollectivityId(colId);
-            double percent = members.isEmpty() ? 0.0 : (upToDate * 100.0) / members.size();
-
-            result.add(new CollectivityOverallStatistics(
-                    new CollectivityInformation(c.getNumber(), c.getName()),
-                    newMembers,
-                    percent
-            ));
-        }
-        return result;
+        return statisticsService.getOverallStatistics(from, to);
     }
 
-    public List<FinancialAccount> getFinancialAccounts(String collectivityId, LocalDate at) {
-        Collectivity c = collectivityRepository.findById(collectivityId);
-        if (c == null) {
-            throw new CollectivityNotFoundException(collectivityId);
-        }
-        return financialAccountRepository.findAllByCollectivityIdWithBalanceAt(collectivityId, at);
+    public List<FinancialAccount> getFinancialAccounts(
+            String collectivityId,
+            LocalDate at) {
+
+        getCollectivityOrThrow(collectivityId);
+
+        return financialAccountRepository
+                .findAllByCollectivityIdWithBalanceAt(collectivityId, at);
     }
 }
