@@ -1,6 +1,9 @@
 package com.example.agricole.service;
 
 import com.example.agricole.dto.AssignIdentityRequest;
+import com.example.agricole.dto.CollectivityInformation;
+import com.example.agricole.dto.CollectivityLocalStatistics;
+import com.example.agricole.dto.CollectivityOverallStatistics;
 import com.example.agricole.dto.CreateCollectivity;
 import com.example.agricole.dto.CreateMembershipFee;
 import com.example.agricole.entity.*;
@@ -13,6 +16,7 @@ import com.example.agricole.repository.CollectivityRepository;
 import com.example.agricole.repository.FinancialAccountRepository;
 import com.example.agricole.repository.MemberRepository;
 import com.example.agricole.repository.MembershipFeeRepository;
+import com.example.agricole.repository.StatisticsRepository;
 import com.example.agricole.repository.TransactionRepository;
 import com.example.agricole.validator.CollectivityStructureValidator;
 import com.example.agricole.validator.MemberExperienceValidator;
@@ -33,6 +37,7 @@ public class CollectivityService {
     private final MembershipFeeRepository membershipFeeRepository;
     private final TransactionRepository transactionRepository;
     private final FinancialAccountRepository financialAccountRepository;
+    private final StatisticsRepository statisticsRepository;
 
     public CollectivityService(
             CollectivityRepository collectivityRepository,
@@ -41,7 +46,8 @@ public class CollectivityService {
             CollectivityStructureValidator structureValidator,
             MembershipFeeRepository membershipFeeRepository,
             TransactionRepository transactionRepository,
-            FinancialAccountRepository financialAccountRepository
+            FinancialAccountRepository financialAccountRepository,
+            StatisticsRepository statisticsRepository
     ) {
         this.collectivityRepository = collectivityRepository;
         this.memberRepository = memberRepository;
@@ -50,6 +56,7 @@ public class CollectivityService {
         this.membershipFeeRepository = membershipFeeRepository;
         this.transactionRepository = transactionRepository;
         this.financialAccountRepository = financialAccountRepository;
+        this.statisticsRepository = statisticsRepository;
     }
 
     public List<Collectivity> createCollectivities(List<CreateCollectivity> requests) {
@@ -155,18 +162,42 @@ public class CollectivityService {
     public Collectivity getCollectivityById(String id) {
         Collectivity c = collectivityRepository.findById(id);
         if (c == null) {
-            throw new CollectivityNotFoundException("Collectivity not found");
+            throw new RuntimeException("Collectivity not found");
         }
         List<Member> members = memberRepository.findByCollectivityId(id);
         c.setMembers(members);
         return c;
     }
 
-    public List<FinancialAccount> getFinancialAccounts(String collectivityId, LocalDate at) {
-        Collectivity c = collectivityRepository.findById(collectivityId);
-        if (c == null) {
+    public List<CollectivityLocalStatistics> getLocalStatistics(
+            String collectivityId, LocalDate from, LocalDate to) {
+        if (collectivityRepository.findById(collectivityId) == null) {
             throw new CollectivityNotFoundException(collectivityId);
         }
-        return financialAccountRepository.findByCollectivityId(collectivityId);
+        return statisticsRepository.getLocalStatistics(collectivityId, from, to);
+    }
+
+    public List<CollectivityOverallStatistics> getOverallStatistics(
+            LocalDate from, LocalDate to) {
+        List<Collectivity> all = collectivityRepository.findAll();
+        List<CollectivityOverallStatistics> result = new ArrayList<>();
+
+        for (Collectivity c : all) {
+            String colId = c.getId();
+
+            int newMembers = (int) statisticsRepository.countNewMembers(colId, from, to);
+            double totalRequired = statisticsRepository.totalActiveRequired(colId, to);
+            long upToDate = statisticsRepository.countUpToDateMembers(colId, to, totalRequired);
+
+            List<Member> members = memberRepository.findByCollectivityId(colId);
+            double percent = members.isEmpty() ? 0.0 : (upToDate * 100.0) / members.size();
+
+            result.add(new CollectivityOverallStatistics(
+                    new CollectivityInformation(c.getNumber(), c.getName()),
+                    newMembers,
+                    percent
+            ));
+        }
+        return result;
     }
 }
