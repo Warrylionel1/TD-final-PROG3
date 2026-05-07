@@ -203,4 +203,30 @@ public class MemberRepository {
 
         return members;
     }
+
+    public boolean existsById(String memberId) {
+
+        String sql = """
+        SELECT COUNT(*) 
+        FROM member
+        WHERE id = ?
+    """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, memberId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+
+            return false;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error checking member existence", e);
+        }
+    }
 }

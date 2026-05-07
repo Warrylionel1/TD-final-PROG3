@@ -122,4 +122,27 @@ public class ActivityRepository {
 
         return result;
     }
+
+    public boolean existsById(String activityId) {
+
+        String sql = """
+        SELECT 1
+        FROM collectivity_activity
+        WHERE id = ?
+        LIMIT 1
+    """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, activityId);
+
+            ResultSet rs = ps.executeQuery();
+
+            return rs.next();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error checking activity existence", e);
+        }
+    }
 }

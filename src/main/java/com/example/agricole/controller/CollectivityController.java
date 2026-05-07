@@ -4,10 +4,8 @@ import com.example.agricole.dto.*;
 import com.example.agricole.entity.Collectivity;
 import com.example.agricole.entity.CollectivityTransaction;
 import com.example.agricole.entity.MembershipFee;
-import com.example.agricole.exception.BadRequestException;
-import com.example.agricole.exception.CollectivityNotFoundException;
-import com.example.agricole.exception.ConflictException;
-import com.example.agricole.exception.MemberNotFoundException;
+import com.example.agricole.exception.*;
+import com.example.agricole.service.ActivityAttendanceService;
 import com.example.agricole.service.ActivityService;
 import com.example.agricole.service.CollectivityService;
 import com.example.agricole.service.StatisticsService;
@@ -26,13 +24,18 @@ public class CollectivityController {
     private final CollectivityService collectivityService;
     private final StatisticsService statisticsService;
     private final ActivityService activityService;
+    private final ActivityAttendanceService activityAttendanceService;
 
-    public CollectivityController(CollectivityService collectivityService,
-                                  StatisticsService statisticsService,
-                                  ActivityService activityService) {
+    public CollectivityController(
+            CollectivityService collectivityService,
+            StatisticsService statisticsService,
+            ActivityService activityService,
+            ActivityAttendanceService activityAttendanceService
+    ) {
         this.collectivityService = collectivityService;
         this.statisticsService = statisticsService;
         this.activityService = activityService;
+        this.activityAttendanceService = activityAttendanceService;
     }
 
     @PostMapping
@@ -198,6 +201,25 @@ public class CollectivityController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Internal server error");
+        }
+    }
+
+    @PostMapping("/{id}/activities/{activityId}/attendance")
+    public ResponseEntity<?> markAttendance(
+            @PathVariable String id,
+            @PathVariable String activityId,
+            @RequestBody List<CreateActivityMemberAttendance> requests
+    ) {
+        try {
+            return ResponseEntity.status(201)
+                    .body(activityAttendanceService.markAttendance(activityId, requests));
+
+        } catch (AttendanceAlreadySetException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
                     .body("Internal server error");
         }
     }

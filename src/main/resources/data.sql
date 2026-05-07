@@ -150,3 +150,102 @@ INSERT INTO collectivity_transaction (id, collectivity_id, creation_date, amount
 select * from collectivity_activity;
 
 DELETE FROM collectivity_activity;
+
+
+
+
+-- =========================================================
+-- ACTIVITÉS
+-- =========================================================
+
+INSERT INTO collectivity_activity (
+    id,
+    collectivity_id,
+    label,
+    activity_type,
+    executive_date,
+    week_ordinal,
+    day_of_week
+)
+VALUES
+    (
+        'act-col1-meeting-1',
+        'col-1',
+        'Réunion hebdomadaire',
+        'MEETING',
+        '2026-05-20',
+        NULL,
+        NULL
+    ),
+    (
+        'act-col1-training-1',
+        'col-1',
+        'Formation agricole',
+        'TRAINING',
+        NULL,
+        2,
+        'SA'
+    ),
+    (
+        'act-col3-meeting-1',
+        'col-3',
+        'Assemblée générale',
+        'MEETING',
+        '2026-06-10',
+        NULL,
+        NULL
+    );
+
+-- =========================================================
+-- OCCUPATIONS CONCERNÉES
+-- =========================================================
+
+INSERT INTO activity_member_concerned (
+    activity_id,
+    occupation
+)
+VALUES
+    ('act-col1-meeting-1', 'PRESIDENT'),
+    ('act-col1-meeting-1', 'SECRETARY'),
+
+    ('act-col1-training-1', 'JUNIOR'),
+    ('act-col1-training-1', 'SENIOR'),
+
+    ('act-col3-meeting-1', 'PRESIDENT'),
+    ('act-col3-meeting-1', 'TREASURER');
+
+-- =========================================================
+-- PRÉSENCES / ABSENCES
+-- =========================================================
+
+INSERT INTO activity_member_attendance (
+    id,
+    activity_id,
+    member_id,
+    attendance_status
+)
+VALUES
+    (
+        gen_random_uuid()::VARCHAR,
+        'act-col1-meeting-1',
+        'C1-M1',
+        'PRESENT'
+    ),
+    (
+        gen_random_uuid()::VARCHAR,
+        'act-col1-meeting-1',
+        'C1-M2',
+        'ABSENT'
+    ),
+    (
+        gen_random_uuid()::VARCHAR,
+        'act-col1-training-1',
+        'C1-M5',
+        'PRESENT'
+    ),
+    (
+        gen_random_uuid()::VARCHAR,
+        'act-col3-meeting-1',
+        'C3-M1',
+        'PRESENT'
+    );
