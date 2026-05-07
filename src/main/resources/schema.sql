@@ -8,12 +8,9 @@ CREATE TABLE member (
                         first_name VARCHAR NOT NULL,
                         last_name VARCHAR NOT NULL,
                         birth_date DATE,
-
                         gender VARCHAR CHECK (gender IN ('MALE', 'FEMALE')),
-
                         address VARCHAR,
                         profession VARCHAR,
-
                         phone_number VARCHAR,
                         email VARCHAR UNIQUE,
 
@@ -169,3 +166,98 @@ CREATE TABLE collectivity_transaction (
                                           FOREIGN KEY (account_credited_id) REFERENCES financial_account(id),
                                           FOREIGN KEY (member_debited_id) REFERENCES member(id)
 );
+
+-- =========================
+-- COLLECTIVITY_ACTIVITY
+-- =========================
+CREATE TABLE collectivity_activity (
+                                       id VARCHAR(36) PRIMARY KEY,
+
+                                       collectivity_id VARCHAR(36) NOT NULL,
+
+                                       label VARCHAR NOT NULL,
+
+                                       activity_type VARCHAR(20) NOT NULL CHECK (
+                                           activity_type IN ('MEETING', 'TRAINING', 'OTHER')
+                                           ),
+
+                                       executive_date DATE,
+
+                                       week_ordinal INT CHECK (week_ordinal BETWEEN 1 AND 5),
+
+                                       day_of_week VARCHAR(2) CHECK (
+                                           day_of_week IN ('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU')
+                                           ),
+
+                                       CONSTRAINT fk_activity_collectivity
+                                           FOREIGN KEY (collectivity_id)
+                                               REFERENCES collectivity(id)
+                                               ON DELETE CASCADE,
+
+                                       CONSTRAINT chk_activity_date_or_recurrence CHECK (
+                                           (executive_date IS NOT NULL AND week_ordinal IS NULL AND day_of_week IS NULL)
+                                               OR
+                                           (executive_date IS NULL AND week_ordinal IS NOT NULL AND day_of_week IS NOT NULL)
+                                           )
+);
+
+CREATE TABLE activity_member_concerned (
+                                           activity_id VARCHAR(36),
+                                           occupation VARCHAR(30) NOT NULL CHECK (
+                                               occupation IN (
+                                                              'JUNIOR',
+                                                              'SENIOR',
+                                                              'SECRETARY',
+                                                              'TREASURER',
+                                                              'VICE_PRESIDENT',
+                                                              'PRESIDENT'
+                                                   )
+                                               ),
+
+                                           PRIMARY KEY (activity_id, occupation),
+
+                                           FOREIGN KEY (activity_id)
+                                               REFERENCES collectivity_activity(id)
+                                               ON DELETE CASCADE
+);
+
+CREATE TABLE activity_member_attendance (
+                                            id VARCHAR(36) PRIMARY KEY,
+
+                                            activity_id VARCHAR(36) NOT NULL,
+                                            member_id VARCHAR(36) NOT NULL,
+
+                                            attendance_status VARCHAR(20) NOT NULL CHECK (
+                                                attendance_status IN ('ATTENDED', 'MISSING', 'UNDEFINED')
+                                                ),
+
+                                            CONSTRAINT fk_attendance_activity
+                                                FOREIGN KEY (activity_id)
+                                                    REFERENCES collectivity_activity(id)
+                                                    ON DELETE CASCADE,
+
+                                            CONSTRAINT fk_attendance_member
+                                                FOREIGN KEY (member_id)
+                                                    REFERENCES member(id)
+                                                    ON DELETE CASCADE,
+
+                                            CONSTRAINT uq_activity_member UNIQUE (activity_id, member_id)
+);
+
+-- =========================
+-- NETOYAGE BDD
+-- =========================
+TRUNCATE TABLE
+    activity_member_attendance,
+    activity_member_concerned,
+    collectivity_activity,
+    collectivity_transaction,
+    member_payment,
+    financial_account,
+    membership_fee,
+    collectivity_structure,
+    member_referee,
+    collectivity_member,
+    collectivity,
+    member
+    CASCADE;

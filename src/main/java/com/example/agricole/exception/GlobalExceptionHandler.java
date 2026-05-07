@@ -2,6 +2,7 @@ package com.example.agricole.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -44,6 +45,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<String> handleNotReadable(HttpMessageNotReadableException e) {
+
+        String message = e.getMessage();
+
+        if (message != null && message.contains("ActivityType")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid activityType: must be MEETING, TRAINING or OTHER");
+        }
+
+        if (message != null && message.contains("MemberOccupation")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid memberOccupationConcerned value");
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Malformed request body");
     }
 
     @ExceptionHandler(Exception.class)

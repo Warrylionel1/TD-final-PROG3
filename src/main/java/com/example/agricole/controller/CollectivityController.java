@@ -8,6 +8,7 @@ import com.example.agricole.exception.BadRequestException;
 import com.example.agricole.exception.CollectivityNotFoundException;
 import com.example.agricole.exception.ConflictException;
 import com.example.agricole.exception.MemberNotFoundException;
+import com.example.agricole.service.ActivityService;
 import com.example.agricole.service.CollectivityService;
 import com.example.agricole.service.StatisticsService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -24,11 +25,14 @@ public class CollectivityController {
 
     private final CollectivityService collectivityService;
     private final StatisticsService statisticsService;
+    private final ActivityService activityService;
 
     public CollectivityController(CollectivityService collectivityService,
-                                  StatisticsService statisticsService) {
+                                  StatisticsService statisticsService,
+                                  ActivityService activityService) {
         this.collectivityService = collectivityService;
         this.statisticsService = statisticsService;
+        this.activityService = activityService;
     }
 
     @PostMapping
@@ -152,6 +156,30 @@ public class CollectivityController {
         } catch (BadRequestException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/activities")
+    public ResponseEntity<?> createActivities(
+            @PathVariable String id,
+            @RequestBody List<CreateCollectivityActivity> requests
+    ) {
+        try {
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(activityService.createActivities(id, requests));
+
+        } catch (CollectivityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Internal server error");
         }
     }
 }
