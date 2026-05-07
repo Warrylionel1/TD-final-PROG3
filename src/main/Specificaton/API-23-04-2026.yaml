@@ -1,239 +1,120 @@
-openapi: 3.0.3
+openapi: 3.1.0
 
 info:
-  title: Federation Agricole API
-  version: 1.0.0
+  title: Agricultural Federation API
+  version: 2.0.0
+  description: API for managing collectivities, members, and financial accounts
 
 tags:
-  - name: Collectivites
-  - name: Candidatures
-  - name: Membres
-  - name: Paiements
-  - name: Comptes
-  - name: Activites
-  - name: Statistiques
-  - name: Federation
+  - name: Collectivities
+    description: Operations related to collectivities
 
 paths:
 
-  /collectivites:
-    post:
-      tags: [Collectivites]
-      summary: Créer une collectivité
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CollectiviteCreate'
-      responses:
-        201:
-          description: Collectivité créée
-        400:
-          $ref: '#/components/responses/BadRequest'
-        401:
-          $ref: '#/components/responses/Unauthorized'
-        403:
-          $ref: '#/components/responses/Forbidden'
-
-  /candidatures:
-    post:
-      tags: [Candidatures]
-      summary: Demander une adhésion à une collectivité
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CandidatureCreate'
-      responses:
-        201:
-          description: Candidature acceptée
-        422:
-          description: Conditions non respectées
-        400:
-          $ref: '#/components/responses/BadRequest'
-        401:
-          $ref: '#/components/responses/Unauthorized'
-
-  /membres/{id}/changement-collectivite:
-    put:
-      tags: [Membres]
-      summary: Changer de collectivité
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [nouvelleCollectiviteId]
-              properties:
-                nouvelleCollectiviteId:
-                  type: integer
-      responses:
-        200:
-          description: Collectivité mise à jour
-        400:
-          $ref: '#/components/responses/BadRequest'
-        404:
-          $ref: '#/components/responses/NotFound'
-
-  /membres/{id}/demission:
-    post:
-      tags: [Membres]
-      summary: Démissionner de la collectivité
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Membre retiré
-        404:
-          $ref: '#/components/responses/NotFound'
-
-  /paiements:
-    post:
-      tags: [Paiements]
-      summary: Enregistrer un paiement
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Paiement'
-      responses:
-        201:
-          description: Paiement enregistré
-        400:
-          $ref: '#/components/responses/BadRequest'
-        401:
-          $ref: '#/components/responses/Unauthorized'
-
-  /comptes:
-    post:
-      tags: [Comptes]
-      summary: Créer un compte
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Compte'
-      responses:
-        201:
-          description: Compte créé
-        400:
-          $ref: '#/components/responses/BadRequest'
-
+  /collectivities/{id}:
     get:
-      tags: [Comptes]
-      summary: Lister les comptes
-      responses:
-        200:
-          description: Liste des comptes
-        401:
-          $ref: '#/components/responses/Unauthorized'
+      tags:
+        - Collectivities
+      summary: Get a collectivity by ID
+      description: |
+        Retrieves a collectivity by its unique identifier.
+        The response includes the list of members belonging to the collectivity.
+      operationId: getCollectivityById
 
-  /activites:
-    post:
-      tags: [Activites]
-      summary: Créer une activité
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Activite'
-      responses:
-        201:
-          description: Activité créée
-
-    get:
-      tags: [Activites]
-      summary: Lister les activités
-      responses:
-        200:
-          description: Liste des activités
-
-  /activites/{id}/presence:
-    post:
-      tags: [Activites]
-      summary: Enregistrer présence
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
+          description: Unique identifier of the collectivity
           schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Presence'
-      responses:
-        201:
-          description: Présence enregistrée
-        400:
-          $ref: '#/components/responses/BadRequest'
-        404:
-          $ref: '#/components/responses/NotFound'
+            type: string
+            example: "col-123"
 
-  /collectivites/{id}/statistiques:
+      responses:
+        "200":
+          description: Collectivity found successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collectivity"
+
+        "404":
+          description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+
+  /collectivities/{id}/financialAccounts:
     get:
-      tags: [Statistiques]
-      summary: Statistiques collectivité
+      tags:
+        - Collectivities
+      summary: Get financial accounts of a collectivity
+      description: |
+        Returns the list of financial accounts (cash, mobile banking, bank)
+        of a collectivity with their current balance.
+
+        The query parameter `at` allows retrieving the balance at a specific date.
+        If historical tracking is not implemented, `at` is ignored.
+      operationId: getFinancialAccounts
+
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
+          description: Unique identifier of the collectivity
           schema:
-            type: integer
-        - in: query
-          name: dateDebut
+            type: string
+            example: "col-123"
+
+        - name: at
+          in: query
+          required: true
+          description: Date at which the balances are requested
           schema:
             type: string
             format: date
-        - in: query
-          name: dateFin
-          schema:
-            type: string
-            format: date
-      responses:
-        200:
-          description: Statistiques récupérées
-        401:
-          $ref: '#/components/responses/Unauthorized'
+            example: "2026-04-23"
 
-  /federation/statistiques:
-    get:
-      tags: [Federation]
-      summary: Rapport global fédération
-      parameters:
-        - in: query
-          name: dateDebut
-          schema:
-            type: string
-            format: date
-        - in: query
-          name: dateFin
-          schema:
-            type: string
-            format: date
       responses:
-        200:
-          description: Rapport généré
-        403:
-          $ref: '#/components/responses/Forbidden'
+        "200":
+          description: List of financial accounts successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FinancialAccount"
+
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "404":
+          description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 
 
 
@@ -429,10 +310,6 @@ components:
           type: string
         code:
           type: integer
-
-    # =========================
-    # NEW DOMAIN (from second spec)
-    # =========================
 
     Collectivity:
       type: object
