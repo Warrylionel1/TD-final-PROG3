@@ -182,4 +182,23 @@ public class CollectivityController {
                     .body("Internal server error");
         }
     }
+
+    @GetMapping("/{id}/activities")
+    public ResponseEntity<?> getActivities(
+            @PathVariable String id
+    ) {
+        try {
+            return ResponseEntity.ok(
+                    activityService.getActivitiesByCollectivity(id)
+            );
+
+        } catch (CollectivityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Internal server error");
+        }
+    }
 }

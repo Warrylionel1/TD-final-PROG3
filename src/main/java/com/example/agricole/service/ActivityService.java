@@ -2,25 +2,36 @@ package com.example.agricole.service;
 
 import com.example.agricole.dto.CreateCollectivityActivity;
 import com.example.agricole.dto.CollectivityActivityResponse;
+import com.example.agricole.dto.MonthlyRecurrenceRule;
 import com.example.agricole.entity.Activity;
 import com.example.agricole.enums.MemberOccupation;
-import com.example.agricole.enums.ActivityType;
 import com.example.agricole.exception.BadRequestException;
+import com.example.agricole.exception.CollectivityNotFoundException;
 import com.example.agricole.exception.InvalidEnumValueException;
 import com.example.agricole.repository.ActivityConcernedRepository;
 import com.example.agricole.repository.ActivityRepository;
-import lombok.RequiredArgsConstructor;
+import com.example.agricole.repository.CollectivityRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class ActivityService {
 
     private final ActivityRepository activityRepository;
     private final ActivityConcernedRepository activityConcernedRepository;
+    private final CollectivityRepository collectivityRepository;
+
+    public ActivityService(
+            ActivityRepository activityRepository,
+            ActivityConcernedRepository activityConcernedRepository,
+            CollectivityRepository collectivityRepository
+    ) {
+        this.activityRepository = activityRepository;
+        this.activityConcernedRepository = activityConcernedRepository;
+        this.collectivityRepository = collectivityRepository;
+    }
 
     public List<CollectivityActivityResponse> createActivities(
             String collectivityId,
@@ -31,6 +42,10 @@ public class ActivityService {
             throw new BadRequestException("Activities list cannot be empty");
         }
 
+        if (!collectivityRepository.existsById(collectivityId)) {
+            throw new CollectivityNotFoundException("Collectivity not found");
+        }
+
         List<Activity> activities = requests.stream().map(req -> {
 
             if (req.getExecutiveDate() != null && req.getRecurrenceRule() != null) {
@@ -39,6 +54,10 @@ public class ActivityService {
 
             if (req.getExecutiveDate() == null && req.getRecurrenceRule() == null) {
                 throw new BadRequestException("Either executiveDate or recurrenceRule is required");
+            }
+
+            if (req.getLabel() == null || req.getLabel().isBlank()) {
+                throw new BadRequestException("Label cannot be empty");
             }
 
             Activity a = new Activity();
@@ -93,8 +112,43 @@ public class ActivityService {
                             a.getActivityType(),
                             occupations,
                             a.getExecutiveDate(),
-                            a.getWeekOrdinal(),
-                            a.getDayOfWeek()
+                            (a.getWeekOrdinal() == null && a.getDayOfWeek() == null)
+                                    ? null
+                                    : new MonthlyRecurrenceRule(
+                                    a.getWeekOrdinal(),
+                                    a.getDayOfWeek()
+                            )
+                    );
+                })
+                .toList();
+    }
+
+    public List<CollectivityActivityResponse> getActivitiesByCollectivity(String collectivityId) {
+
+        if (!collectivityRepository.existsById(collectivityId)) {
+            throw new CollectivityNotFoundException("Collectivity not found");
+        }
+
+        List<Activity> activities =
+                activityRepository.findByCollectivityId(collectivityId);
+
+        return activities.stream()
+                .map(a -> {
+                    List<MemberOccupation> occupations =
+                            activityConcernedRepository.findByActivityId(a.getId());
+
+                    return new CollectivityActivityResponse(
+                            a.getId(),
+                            a.getLabel(),
+                            a.getActivityType(),
+                            occupations,
+                            a.getExecutiveDate(),
+                            (a.getWeekOrdinal() == null && a.getDayOfWeek() == null)
+                                    ? null
+                                    : new MonthlyRecurrenceRule(
+                                    a.getWeekOrdinal(),
+                                    a.getDayOfWeek()
+                            )
                     );
                 })
                 .toList();

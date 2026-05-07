@@ -1,15 +1,13 @@
 package com.example.agricole.repository;
 
 import com.example.agricole.entity.Activity;
+import com.example.agricole.enums.ActivityType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -69,5 +67,59 @@ public class ActivityRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Error inserting activities", e);
         }
+    }
+
+    public List<Activity> findByCollectivityId(String collectivityId) {
+
+        String sql = """
+        SELECT id,
+               collectivity_id,
+               label,
+               activity_type,
+               executive_date,
+               week_ordinal,
+               day_of_week
+        FROM collectivity_activity
+        WHERE collectivity_id = ?
+        ORDER BY executive_date NULLS LAST
+    """;
+
+        List<Activity> result = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, collectivityId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+
+                Activity a = new Activity();
+                a.setId(rs.getString("id"));
+                a.setCollectivityId(rs.getString("collectivity_id"));
+                a.setLabel(rs.getString("label"));
+                a.setActivityType(ActivityType.valueOf(rs.getString("activity_type")));
+
+                Date execDate = rs.getDate("executive_date");
+                if (execDate != null) {
+                    a.setExecutiveDate(execDate.toLocalDate());
+                }
+
+                int weekOrdinal = rs.getInt("week_ordinal");
+                if (!rs.wasNull()) {
+                    a.setWeekOrdinal(weekOrdinal);
+                }
+
+                a.setDayOfWeek(rs.getString("day_of_week"));
+
+                result.add(a);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching activities", e);
+        }
+
+        return result;
     }
 }

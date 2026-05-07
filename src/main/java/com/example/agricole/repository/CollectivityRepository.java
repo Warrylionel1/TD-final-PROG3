@@ -235,4 +235,22 @@ public class CollectivityRepository {
 
         return ids;
     }
+
+    public boolean existsById(String id) {
+
+        String sql = "SELECT 1 FROM collectivity WHERE id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, id);
+
+            ResultSet rs = ps.executeQuery();
+
+            return rs.next();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
