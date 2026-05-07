@@ -51,7 +51,7 @@ public class FinancialAccountRepository {
                 ps.setString(8, ba.getBankName().name());
                 ps.setInt(9, ba.getBankCode());
                 ps.setInt(10, ba.getBankBranchCode());
-                ps.setInt(11, ba.getBankAccountNumber());
+                ps.setLong(11, ba.getBankAccountNumber());
                 ps.setInt(12, ba.getBankAccountKey());
             } else { // CashAccount
                 ps.setNull(5, Types.VARCHAR);

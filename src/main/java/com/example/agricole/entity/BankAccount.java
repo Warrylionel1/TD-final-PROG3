@@ -11,6 +11,6 @@ public class BankAccount extends FinancialAccount {
     private Bank bankName;
     private int bankCode;
     private int bankBranchCode;
-    private int bankAccountNumber;
+    private long bankAccountNumber;
     private int bankAccountKey;
 }

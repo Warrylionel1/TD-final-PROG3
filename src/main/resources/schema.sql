@@ -261,3 +261,6 @@ TRUNCATE TABLE
     collectivity,
     member
     CASCADE;
+
+ALTER TABLE financial_account
+    ALTER COLUMN bank_account_number TYPE BIGINT;
